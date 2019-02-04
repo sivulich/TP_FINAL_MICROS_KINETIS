@@ -303,9 +303,9 @@ static void PlayScreenCreate(void)
 
 }
 
-void MP3UiSetSongInfo(const char* title, const char*artist, int dur)
+void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first)
 {
-	if (title != NULL)
+	if (first == 1)
 	{
 		lv_label_set_text(songNameLbl, title);
 		lv_obj_set_width(songNameLbl, LV_HOR_RES / 2);
@@ -323,7 +323,7 @@ void MP3UiSetSongInfo(const char* title, const char*artist, int dur)
 	}
 	else
 	{
-		currentTime = duration - dur;
+		currentTime = dur;
 		lv_bar_set_value(progressBar, currentTime);
 	}
 }

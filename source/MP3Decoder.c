@@ -8,6 +8,7 @@
 #include "ff.h"
 #include "./helix/pub/mp3dec.h"
 #include "fsl_debug_console.h"
+#include "ID3V1/read_id3.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -19,8 +20,9 @@ static FIL fp;
 static int loadedFile=0;
 
 //Decode info
-static unsigned char *temp,mp3file[MP3_BUFFER_SIZE];
-static int sz, frames = 0, skipped = 0,lastPos=MP3_BUFFER_SIZE,bufSize=MP3_BUFFER_SIZE,duration;
+static unsigned char *temp,mp3file[MP3_BUFFER_SIZE],id3v1Tit[256],id3v1Artist[256];
+static int sz, frames = 0, skipped = 0,lastPos=MP3_BUFFER_SIZE,bufSize=MP3_BUFFER_SIZE;
+static long long duration;
 static UINT br;
 static int headerSize;
 
@@ -48,38 +50,66 @@ unsigned char* getMP3Info(const char* tag,int* size)
 {
 	int i = 0, len = 0;
 	char found = 0;
-	for (i = 0; i < (headerSize - 4); i++)
+	if(headerSize>0)
 	{
-		if (memcmp(mp3file + i, tag, 4) == 0)
+		for (i = 0; i < (headerSize - 4); i++)
 		{
-			//checkear 4 bytes de size, 2 bytes de flag, 1 byte de encoding
-			//leer contenido hasta /0
-			i += 4;
-			if (*(mp3file + i) != 0)
-				break;
-			i += 4 + 2;
-			switch (*(mp3file + i))
+			if (memcmp(mp3file + i, tag, 4) == 0)
 			{
-			case 0: case 3:
-				//printf("UTF-8\n");
-				found = 1;
-				break;
-			case 1: case 2:
-				found = 1;
-				break;
-			default:
+				//checkear 4 bytes de size, 2 bytes de flag, 1 byte de encoding
+				//leer contenido hasta /0
+				i += 4;
+				if (*(mp3file + i) != 0)
+					break;
+				i += 4 + 2;
+				switch (*(mp3file + i))
+				{
+				case 0: case 3:
+					//printf("UTF-8\n");
+					found = 1;
+					break;
+				case 1: case 2:
+					found = 1;
+					break;
+				default:
+					break;
+				}
+				i += 1;
 				break;
 			}
-			i += 1;
-			break;
+		}
+		if (found)
+			while (*(mp3file + i + len) != 0)
+				len++;
+		*size = len;
+		//devolver contenido
+		return (mp3file + i);
+	}
+	else
+	{
+		if(strcmp("TIT2",tag)==0)
+		{
+			read_ID3_info	(
+											 TITLE_ID3,
+											 id3v1Tit,
+											 256,
+											 &fp
+									 );
+			return id3v1Tit;
+		}
+		else if(strcmp("TPE1",tag)==0)
+		{
+			read_ID3_info	(
+														 ARTIST_ID3,
+														 id3v1Artist,
+														 256,
+														 &fp
+												 );
+						return id3v1Artist;
 		}
 	}
-	if (found)
-		while (*(mp3file + i + len) != 0)
-			len++;
-	*size = len;
-	//devolver contenido
-	return (mp3file + i);
+
+
 }
 
 static void unloadFile()
@@ -93,7 +123,7 @@ static void unloadFile()
 	return;
 }
 
-static int decode(short * out,unsigned* len)
+static long long decode(short * out,unsigned* len)
 {
 	if(sz > 0)
 	{
@@ -106,7 +136,7 @@ static int decode(short * out,unsigned* len)
 		else
 			headerSize=0;
 		if (off == -1)
-			return -1;
+			return 0;
 		sz -= off;
 		temp=mp3file+off;
 		bufSize=MP3_BUFFER_SIZE-off;
@@ -116,10 +146,15 @@ static int decode(short * out,unsigned* len)
 		if (code == 0)
 		{
 			MP3GetLastFrameInfo(dec, &info);
-			duration = ((double)(sz+lastPos)) / info.bitrate;
+			if(duration!=0)
+				duration = (info.outputSamps)*1000LL/info.nChans/info.samprate;
+			else
+				duration = sz*8000LL/info.bitrate;
 			frames++;
 			*len=1152*info.nChans;
 		}
+		else if (code ==-1)
+			return MP3DEC.decode(out,len);
 		else
 			return code;
 	}
@@ -141,11 +176,7 @@ static int loadFile(const char* fileName)
 	}
 	loadedFile=1;
 	sz = f_size(&fp);
-	/*f_read(&fp,mp3file+MP3_BUFFER_SIZE-lastPos,lastPos,&br);
-	//Mover a load File
-	int off = MP3FindSyncWord(mp3file, sz);
-	headerSize=off;
-	lastPos=0;*/
+	duration=0;
 	return 0;
 }
 

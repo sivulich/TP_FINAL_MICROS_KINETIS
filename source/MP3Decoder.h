@@ -15,7 +15,7 @@ struct MP3DEC_{
 
 	int (*loadFile)(const char* fileName);
 
-	int (*decode)(short * out,unsigned* len);
+	long long (*decode)(short * out,unsigned* len);
 
 	unsigned char* (*getMP3Info)(const char* tag,int* size);
 

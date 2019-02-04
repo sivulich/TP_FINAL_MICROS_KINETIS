@@ -146,7 +146,7 @@ extern "C" {
 	{
 		if (onFile == 1)
 		{
-			onFile = 1;
+			onFile = 0;
 			newFile = 0;
 			for (int k = len - 1; k > 0; k--)
 			{

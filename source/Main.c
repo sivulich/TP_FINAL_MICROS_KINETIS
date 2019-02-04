@@ -172,7 +172,8 @@ int main(void)
 	int play=1;
 	unsigned buffLen;
 	short outBuff[2][MP3_BUFFER_SIZE];
-
+	int len=0,dur=0;
+	long long pos=0;
 
 
 	while (1) {
@@ -181,28 +182,36 @@ int main(void)
 		uint32_t t = SDMMCEVENT_GetMillis();
 
 		char* file = getMP3file();
-		int len,dur=0;
+
 		if(file!=NULL)
 		{
 			MP3DEC.unloadFile();
 			MP3DEC.loadFile(file);
 			dur=MP3DEC.decode(outBuff[0],&buffLen);
-			MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur);
-			while(dur<=0)
-				dur=MP3DEC.decode(outBuff[0],&buffLen);
-
+			MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1);
+			while(len<=0)
+				len=MP3DEC.decode(outBuff[0],&buffLen);
+			len=0;
+			pos=0;
 		}
 		if(play==1 && MP3DEC.onFile()==1)
 		{
 			//MANDAR A PWM, pasar el buffer que escribir
 			int ret = MP3DEC.decode(outBuff[0],&buffLen);
-			if(ret>0)
-				MP3UiSetSongInfo(NULL,NULL,ret);
+			len+=ret;
+			if(ret>0 && len>1000)
+			{
+				pos+=len;
+				MP3UiSetSongInfo(NULL,NULL,pos/1000,0);
+				len=0;
+			}
+
 			else if(ret<0)
 				PRINTF("ERROR DECODING %d\n",ret);
 			else if(ret  == 0)
 			{
 				PRINTF("Finished Decoding File!\n");
+				MP3UiSetSongInfo(NULL,NULL,dur/1000,0);
 				MP3DEC.unloadFile();
 			}
 
