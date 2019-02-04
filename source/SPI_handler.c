@@ -22,7 +22,7 @@
 #define EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER kDSPI_MasterPcs0
 #define EXAMPLE_DSPI_DEALY_COUNT 0xfffffU
 #define TRANSFER_SIZE 240*320*3        /* Transfer dataSize */
-#define TRANSFER_BAUDRATE 20000000U /* Transfer baudrate - 20M */
+#define TRANSFER_BAUDRATE 50000000U /* Transfer baudrate - 20M */
 
 /*******************************************************************************
  * Prototypes

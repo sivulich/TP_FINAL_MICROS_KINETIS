@@ -55,7 +55,7 @@
 #define LV_ANTIALIAS        1       /*1: Enable anti-aliasing*/
 
 /*Screen refresh settings*/
-#define LV_REFR_PERIOD     	5    /*Screen refresh period in milliseconds*/
+#define LV_REFR_PERIOD     	25    /*Screen refresh period in milliseconds*/
 #define LV_INV_FIFO_SIZE    150    /*The average count of objects on a screen */
 
 /*=================
