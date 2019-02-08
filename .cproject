@@ -221,7 +221,7 @@
 									<listOptionValue builtIn="false" value="helix"/>
 								</option>
 								<option id="gnu.c.link.option.paths.1090094412" name="Library search path (-L)" superClass="gnu.c.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;C:\Users\santi\Desktop\TP_FINAL\helix&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TP_FINAL/helix}&quot;"/>
 								</option>
 								<option id="gnu.c.link.option.ldflags.1866341077" name="Linker flags" superClass="gnu.c.link.option.ldflags"/>
 								<option id="gnu.c.link.option.other.900910875" name="Other options (-Xlinker [option])" superClass="gnu.c.link.option.other" valueType="stringList">

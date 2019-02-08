@@ -1,6 +1,8 @@
 #include "MP3Ui.h"
 #include "UI.h"
 #include <stdio.h>
+
+static lv_res_t fileScreenUpdate(lv_obj_t* obj);
 /*Screens*/
 static lv_obj_t * mainScreen, *equalizerScreen,*filesScreen,*playScreen;
 
@@ -8,9 +10,10 @@ static lv_obj_t * mainScreen, *equalizerScreen,*filesScreen,*playScreen;
 lv_obj_t * btnm1;
 
 /*File Screen info*/
-static lv_obj_t * currentFileList[MAX_FILES],*fileList[2];
+static lv_obj_t * currentFileList[MAX_FILES],*fileList[2],*fileListBackBtn;
 static unsigned fileListSz = 0,fileListPointer=0,newFile=0;
 static char* newFileName;
+static unsigned UIinit=0;
 
 /*Equalizer Screen Info*/
 static lv_obj_t * bassRoller, *midRoller, *trebbleRoller, *eqBackBtn;
@@ -85,8 +88,18 @@ static lv_res_t btnm_action(lv_obj_t * btnm, const char *txt)
 	}
 	else if (strcmp(SYMBOL_DIRECTORY, txt) == 0)
 	{
+		if(UIinit==2)
+		{
+			UIinit=UI.init();
+			if(UIinit==1)
+				fileScreenUpdate(NULL);
+		}
+
 		lv_scr_load(filesScreen);
-		setActiveGroup(FILE_SCREEN0 + fileListPointer,1, &(fileList[fileListPointer]));
+		if(UIinit==1)
+			setActiveGroup(FILE_SCREEN0 + fileListPointer,1, &(fileList[fileListPointer]));
+		else
+			setActiveGroup(FILE_SCREEN0 + fileListPointer,1, &fileListBackBtn);
 	}
 	else if(strcmp(SYMBOL_AUDIO,txt)==0)
 	{
@@ -99,18 +112,22 @@ static lv_res_t btnm_action(lv_obj_t * btnm, const char *txt)
 static lv_res_t fileScreenUpdate(lv_obj_t* obj)
 {
 	unsigned pos = 0;
-	for (unsigned i = 0; i < fileListSz; i++)
+	if(obj!=NULL)
 	{
-		if (obj == currentFileList[i])
+		for (unsigned i = 0; i < fileListSz; i++)
 		{
-			pos = i;
-			break;
-		}	
+			if (obj == currentFileList[i])
+			{
+				pos = i;
+				break;
+			}
+		}
+		UI.exitFile();
+		UI.setPos(pos);
+		if (UI.input(UI_SELECT) == 1)
+			return LV_RES_OK;
 	}
-	UI.exitFile();
-	UI.setPos(pos);
-	if (UI.input(UI_SELECT) == 1)
-		return LV_RES_OK;
+
 		
 	char* currFile = UI.getFile();
 	printf("Current path %s\n", UI.getPath());
@@ -276,7 +293,7 @@ static void FilesScreenCreate(void)
 		}
 	}
 	lv_obj_align(fileList[fileListPointer], NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
-	BackButtonCreate(filesScreen, retMainScreen);
+	fileListBackBtn=BackButtonCreate(filesScreen, retMainScreen);
 	groups[FILE_SCREEN0] = lv_group_create();
 	lv_group_add_obj(groups[FILE_SCREEN0], fileList[0]);
 	//lv_indev_set_group(kb_indev_list, groups[FILE_SCREEN0]);
@@ -374,7 +391,7 @@ void MP3UiCreate(lv_indev_drv_t* kb_dr)
 {
 	kb_drv = kb_dr;
 	kb_indev = lv_indev_drv_register(kb_drv);
-	UI.init();
+	UIinit=UI.init();
 	StylesInit();
 	MainScreenCreate();
 	EqualizerScreenCreate();
