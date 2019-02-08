@@ -4,13 +4,16 @@
 /*Screens*/
 static lv_obj_t * mainScreen, *equalizerScreen,*filesScreen,*playScreen;
 
+/*Main Screen Info*/
+lv_obj_t * btnm1;
+
 /*File Screen info*/
 static lv_obj_t * currentFileList[MAX_FILES],*fileList[2];
 static unsigned fileListSz = 0,fileListPointer=0,newFile=0;
 static char* newFileName;
 
-/*Main Screen Info*/
-lv_obj_t * btnm1;
+/*Equalizer Screen Info*/
+static lv_obj_t * bassRoller, *midRoller, *trebbleRoller, *eqBackBtn;
 
 /*PlayScreen Info*/
 static unsigned duration,currentTime;
@@ -31,12 +34,13 @@ static lv_group_t * groups[SCREENS];
 
 
 
-static void setActiveGroup(int p,lv_obj_t* ob)
+static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 {
 	if (groups[p] != NULL)
 		lv_group_del(groups[p]);
 	groups[p] = lv_group_create();
-	lv_group_add_obj(groups[p], ob);
+	for(int i=0;i<qnt;i++)
+		lv_group_add_obj(groups[p], ob[i]);
 	for (int i = 0; i < SCREENS; i++)
 		if (groups[i] != 0)
 		{
@@ -58,6 +62,8 @@ static int checkMP3file(char* fn, size_t sz)
 {
 	if (fn[sz - 1] == '3' && fn[sz - 2] == 'p' && fn[sz - 3] == 'm'&& fn[sz - 4] == '.')
 		return 1;
+	if (fn[sz - 1] == '3' && fn[sz - 2] == 'P' && fn[sz - 3] == 'M'&& fn[sz - 4] == '.')
+			return 1;
 	return 0;
 }
 
@@ -65,7 +71,7 @@ static lv_res_t retMainScreen(lv_obj_t* obj)
 {
 	lv_scr_load(mainScreen);
 	
-	setActiveGroup(MAIN_SCREEN,btnm1);
+	setActiveGroup(MAIN_SCREEN,1,&btnm1);
 	return LV_RES_OK;
 }
 
@@ -74,16 +80,17 @@ static lv_res_t btnm_action(lv_obj_t * btnm, const char *txt)
 	if (strcmp(SYMBOL_EDIT, txt) == 0)
 	{
 		lv_scr_load(equalizerScreen);
-		setActiveGroup(EQ_SCREEN,equalizerScreen);
+		lv_obj_t* obs[4] = { bassRoller, midRoller, trebbleRoller, eqBackBtn};
+		setActiveGroup(EQ_SCREEN,4,obs);
 	}
 	else if (strcmp(SYMBOL_DIRECTORY, txt) == 0)
 	{
 		lv_scr_load(filesScreen);
-		setActiveGroup(FILE_SCREEN0 + fileListPointer, fileList[fileListPointer]);
+		setActiveGroup(FILE_SCREEN0 + fileListPointer,1, &(fileList[fileListPointer]));
 	}
 	else if(strcmp(SYMBOL_AUDIO,txt)==0)
 	{
-		setActiveGroup(PLAY_SCREEN,playBackBtn);
+		setActiveGroup(PLAY_SCREEN,1,&playBackBtn);
 		lv_scr_load(playScreen);
 	}
 	return LV_RES_OK; /*Return OK because the button matrix is not deleted*/
@@ -112,7 +119,7 @@ static lv_res_t fileScreenUpdate(lv_obj_t* obj)
 		printf("Selected file %s\n", currFile);
 		newFile=1;
 		newFileName=currFile;
-		setActiveGroup(PLAY_SCREEN,playBackBtn);
+		setActiveGroup(PLAY_SCREEN,1,&playBackBtn);
 		lv_scr_load(playScreen);
 	}
 	else
@@ -129,7 +136,7 @@ static lv_res_t fileScreenUpdate(lv_obj_t* obj)
 		//re-creating...
 		fileList[fileListPointer] = lv_list_create(filesScreen, NULL);
 		lv_obj_set_height(fileList[fileListPointer], LV_VER_RES);
-		setActiveGroup(FILE_SCREEN0 + fileListPointer, fileList[fileListPointer]);
+		setActiveGroup(FILE_SCREEN0 + fileListPointer,1, &(fileList[fileListPointer]));
 
 		lv_obj_align(fileList[fileListPointer], NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
 		currarr current = UI.getCurrent(&fileListSz, &pos);
@@ -227,10 +234,10 @@ static void EqualizerScreenCreate(void)
 	equalizerScreen = lv_obj_create(NULL, NULL);
 	lv_obj_set_style(equalizerScreen, &style_bg);
 	static char *names[] = { "Bass","Mid","Trebble" };
-	createRoller(names[0], 0* LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
-	createRoller(names[1], 1*LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
-	createRoller(names[2], 2* LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
-	BackButtonCreate(equalizerScreen, retMainScreen);
+	bassRoller    = createRoller(names[0], 0* LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
+	midRoller     = createRoller(names[1], 1*LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
+	trebbleRoller = createRoller(names[2], 2* LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
+	eqBackBtn = BackButtonCreate(equalizerScreen, retMainScreen);
 }
 
 static void FilesScreenCreate(void)
@@ -374,7 +381,7 @@ void MP3UiCreate(lv_indev_drv_t* kb_dr)
 	FilesScreenCreate();
 	PlayScreenCreate();
 	lv_scr_load(mainScreen);
-	setActiveGroup(MAIN_SCREEN,btnm1);
+	setActiveGroup(MAIN_SCREEN,1,&btnm1);
 }
 
 char* getMP3file()

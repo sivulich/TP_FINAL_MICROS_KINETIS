@@ -32,8 +32,8 @@ typedef struct {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void ili9441_send_cmd(uint8_t cmd);
-static void ili9341_send_data(void * data, uint16_t length);
+static void ili9441_send_cmd(uint8_t cmd, int blocking);
+static void ili9341_send_data(void * data, unsigned length,int  blocking);
 
 /**********************
  *  STATIC VARIABLES
@@ -110,8 +110,8 @@ void ili9431_init(void)
 	//Send all the commands
 	uint16_t cmd = 0;
 	while (ili_init_cmds[cmd].databytes!=0xff) {
-		ili9441_send_cmd(ili_init_cmds[cmd].cmd);
-		ili9341_send_data(ili_init_cmds[cmd].data, ili_init_cmds[cmd].databytes&0x1F);
+		ili9441_send_cmd(ili_init_cmds[cmd].cmd,1);
+		ili9341_send_data(ili_init_cmds[cmd].data, ili_init_cmds[cmd].databytes&0x1F,1);
 		if (ili_init_cmds[cmd].databytes & 0x80) {
 			//vTaskDelay(100 / portTICK_RATE_MS);
 			SDMMCEVENT_Delay(100);
@@ -126,26 +126,27 @@ void ili9431_init(void)
 
 void ili9431_fill(int32_t x1, int32_t y1, int32_t x2, int32_t y2, lv_color_t color)
 {
+
 	uint8_t data[4];
 
 	/*Column addresses*/
-	ili9441_send_cmd(0x2A);
+	ili9441_send_cmd(0x2A,1);
 	data[0] = (x1 >> 8) & 0xFF;
 	data[1] = x1 & 0xFF;
 	data[2] = (x2 >> 8) & 0xFF;
 	data[3] = x2 & 0xFF;
-	ili9341_send_data(data, 4);
+	ili9341_send_data(data, 4,1);
 
 	/*Page addresses*/
-	ili9441_send_cmd(0x2B);
+	ili9441_send_cmd(0x2B,1);
 	data[0] = (y1 >> 8) & 0xFF;
 	data[1] = y1 & 0xFF;
 	data[2] = (y2 >> 8) & 0xFF;
 	data[3] = y2 & 0xFF;
-	ili9341_send_data(data, 4);
+	ili9341_send_data(data, 4,1);
 
 	/*Memory write*/
-	ili9441_send_cmd(0x2C);
+	ili9441_send_cmd(0x2C,1);
 
 	uint32_t size = (x2 - x1 + 1) * (y2 - y1 + 1);
 	uint16_t buf[LV_HOR_RES];
@@ -159,37 +160,36 @@ void ili9431_fill(int32_t x1, int32_t y1, int32_t x2, int32_t y2, lv_color_t col
 	}
 
 	while(size > LV_HOR_RES) {
-		ili9341_send_data(buf, LV_HOR_RES * 2);
+		ili9341_send_data(buf, LV_HOR_RES * 2,1);
 		size -= LV_HOR_RES;
 	}
-
-	ili9341_send_data(buf, size * 2);	/*Send the remaining data*/
+	spiFlush=1;
+	ili9341_send_data(buf, size * 2,0);	/*Send the remaining data*/
 }
 
-
-
-void ili9431_flush(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_color_t * color_map)
+void ili9431_map(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_color_t * color_map)
 {
+
 	uint8_t data[4];
 
 	/*Column addresses*/
-	ili9441_send_cmd(0x2A);
+	ili9441_send_cmd(0x2A,1);
 	data[0] = (x1 >> 8) & 0xFF;
 	data[1] = x1 & 0xFF;
 	data[2] = (x2 >> 8) & 0xFF;
 	data[3] = x2 & 0xFF;
-	ili9341_send_data(data, 4);
+	ili9341_send_data(data, 4,1);
 
 	/*Page addresses*/
-	ili9441_send_cmd(0x2B);
+	ili9441_send_cmd(0x2B,1);
 	data[0] = (y1 >> 8) & 0xFF;
 	data[1] = y1 & 0xFF;
 	data[2] = (y2 >> 8) & 0xFF;
 	data[3] = y2 & 0xFF;
-	ili9341_send_data(data, 4);
+	ili9341_send_data(data, 4,1);
 
 	/*Memory write*/
-	ili9441_send_cmd(0x2C);
+	ili9441_send_cmd(0x2C,1);
 
 
 	uint32_t size = (x2 - x1 + 1) * (y2 - y1 + 1);
@@ -212,31 +212,88 @@ void ili9431_flush(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_colo
 //		size -= LV_HOR_RES;
 //		color_map += LV_HOR_RES;
 //	}
+	spiFlush=1;
+	ili9341_send_data((void*)color_map, size * 2,0);	/*Send the remaining data*/
 
-	ili9341_send_data((void*)color_map, size * 2);	/*Send the remaining data*/
+}
 
-	lv_flush_ready();
 
+
+void ili9431_flush(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_color_t * color_map)
+{
+
+	uint8_t data[4];
+
+	/*Column addresses*/
+	ili9441_send_cmd(0x2A,1);
+	data[0] = (x1 >> 8) & 0xFF;
+	data[1] = x1 & 0xFF;
+	data[2] = (x2 >> 8) & 0xFF;
+	data[3] = x2 & 0xFF;
+	ili9341_send_data(data, 4,1);
+
+	/*Page addresses*/
+	ili9441_send_cmd(0x2B,1);
+	data[0] = (y1 >> 8) & 0xFF;
+	data[1] = y1 & 0xFF;
+	data[2] = (y2 >> 8) & 0xFF;
+	data[3] = y2 & 0xFF;
+	ili9341_send_data(data, 4,1);
+
+	/*Memory write*/
+	ili9441_send_cmd(0x2C,1);
+
+
+	uint32_t size = (x2 - x1 + 1) * (y2 - y1 + 1);
+
+//	/*Byte swapping is required*/
+//	uint32_t i;
+//	uint8_t * color_u8 = (uint8_t *) color_map;
+//	uint8_t color_tmp;
+//	for(i = 0; i < size * 2; i += 2) {
+//		color_tmp = color_u8[i + 1];
+//		color_u8[i + 1] = color_u8[i];
+//		color_u8[i] = color_tmp;
+//	}
+
+
+//	while(size > LV_HOR_RES) {
+//
+//		ili9341_send_data((void*)color_map, LV_HOR_RES * 2);
+//		//vTaskDelay(10 / portTICK_PERIOD_MS);
+//		size -= LV_HOR_RES;
+//		color_map += LV_HOR_RES;
+//	}
+	spiFlush=1;
+	ili9341_send_data((void*)color_map, size * 2,0);	/*Send the remaining data*/
+
+	//lv_flush_ready();
 }
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
 
-static void ili9441_send_cmd(uint8_t cmd)
+static void ili9441_send_cmd(uint8_t cmd, int blocking)
 {
 	GPIO_PinWrite(GPIOC,ILI9341_DC, 0);
 	//gpio_set_level(ILI9341_DC, 0);	 /*Command mode*/
 
 	//disp_spi_send(&cmd, 1);
-	SPI_Write(&cmd, 1);
+	if(blocking==1)
+		SPI_Write_Blocking(&cmd, 1);
+	else
+		SPI_Write_DMA(&cmd,1);
 }
 
-static void ili9341_send_data(void * data, uint16_t length)
+static void ili9341_send_data(void * data, unsigned length, int blocking)
 {
 	GPIO_PinWrite(GPIOC,ILI9341_DC, 1);
 	//gpio_set_level(ILI9341_DC, 1);	 /*Data mode*/
 
 	//disp_spi_send(data, length);
-	SPI_Write(data, length);
+	if(blocking==1)
+		SPI_Write_Blocking(data, length);
+	else
+		SPI_Write_DMA(data,length);
 }

@@ -42,20 +42,20 @@
  * Required for buffered drawing, opacity and anti-aliasing
  * VDB makes the double buffering, you don't need to deal with it!
  * Typical size: ~1/10 screen */
-#define LV_VDB_SIZE         (60 * LV_HOR_RES)  /*Size of VDB in pixel count (1/10 screen size is good for first)*/
-#define LV_VDB_PX_BPP       LV_COLOR_SIZE      /*Bit-per-pixel of VDB. Useful for monochrome or non-standard color format displays. (Special formats are handled with `disp_drv->vdb_wr`)*/
-#define LV_VDB_ADR          0                  /*Place VDB to a specific address (e.g. in external RAM) (0: allocate automatically into RAM; LV_VDB_ADR_INV: to replace it later with `lv_vdb_set_adr()`)*/
+#define LV_VDB_SIZE         (30 * LV_HOR_RES)  	/*Size of VDB in pixel count (1/10 screen size is good for first)*/
+#define LV_VDB_PX_BPP       LV_COLOR_SIZE      			/*Bit-per-pixel of VDB. Useful for monochrome or non-standard color format displays. (Special formats are handled with `disp_drv->vdb_wr`)*/
+#define LV_VDB_ADR          0         					/*Place VDB to a specific address (e.g. in external RAM) (0: allocate automatically into RAM; LV_VDB_ADR_INV: to replace it later with `lv_vdb_set_adr()`)*/
 
 /* Use two Virtual Display buffers (VDB) parallelize rendering and flushing (optional)
  * The flushing should use DMA to write the frame buffer in the background*/
-#define LV_VDB_DOUBLE       0       /*1: Enable the use of 2 VDBs*/
+#define LV_VDB_DOUBLE       1       /*1: Enable the use of 2 VDBs*/
 #define LV_VDB2_ADR         0       /*Place VDB2 to a specific address (e.g. in external RAM) (0: allocate automatically into RAM; LV_VDB_ADR_INV: to replace it later with `lv_vdb_set_adr()`)*/
 
 /* Enable anti-aliasing (lines, and radiuses will be smoothed) */
 #define LV_ANTIALIAS        1       /*1: Enable anti-aliasing*/
 
 /*Screen refresh settings*/
-#define LV_REFR_PERIOD     	25    /*Screen refresh period in milliseconds*/
+#define LV_REFR_PERIOD     	40    /*Screen refresh period in milliseconds*/
 #define LV_INV_FIFO_SIZE    150    /*The average count of objects on a screen */
 
 /*=================
@@ -201,10 +201,10 @@
 #endif
 
 /*Line (dependencies: -*/
-#define USE_LV_LINE     1
+#define USE_LV_LINE     0
 
 /*Arc (dependencies: -)*/
-#define USE_LV_ARC      1
+#define USE_LV_ARC      0
 
 /*******************
  * Container objects
@@ -217,10 +217,10 @@
 #define USE_LV_PAGE     1
 
 /*Window (dependencies: lv_cont, lv_btn, lv_label, lv_img, lv_page)*/
-#define USE_LV_WIN      1
+#define USE_LV_WIN      0
 
 /*Tab (dependencies: lv_page, lv_btnm)*/
-#define USE_LV_TABVIEW      1
+#define USE_LV_TABVIEW      0
 #if USE_LV_TABVIEW != 0
 #define LV_TABVIEW_ANIM_TIME    300     /*Time of slide animation [ms] (0: no animation)*/
 #endif
@@ -233,32 +233,32 @@
 #define USE_LV_BAR      1
 
 /*Line meter (dependencies: *;)*/
-#define USE_LV_LMETER   1
+#define USE_LV_LMETER   0
 
 /*Gauge (dependencies:bar, lmeter)*/
-#define USE_LV_GAUGE    1
+#define USE_LV_GAUGE    0
 
 /*Chart (dependencies: -)*/
-#define USE_LV_CHART    1
+#define USE_LV_CHART    0
 
 /*LED (dependencies: -)*/
-#define USE_LV_LED      1
+#define USE_LV_LED      0
 
 /*Message box (dependencies: lv_rect, lv_btnm, lv_label)*/
-#define USE_LV_MBOX     1
+#define USE_LV_MBOX     0
 
 /*Text area (dependencies: lv_label, lv_page)*/
-#define USE_LV_TA       1
+#define USE_LV_TA       0
 #if USE_LV_TA != 0
 #define LV_TA_CURSOR_BLINK_TIME 400     /*ms*/
 #define LV_TA_PWD_SHOW_TIME     1500    /*ms*/
 #endif
 
 /*Calendar (dependencies: -)*/
-#define USE_LV_CALENDAR 1
+#define USE_LV_CALENDAR 0
 
 /*Preload (dependencies: arc)*/
-#define USE_LV_PRELOAD      1
+#define USE_LV_PRELOAD      0
 #if USE_LV_PRELOAD != 0
 #define LV_PRELOAD_DEF_ARC_LENGTH   60      /*[deg]*/
 #define LV_PRELOAD_DEF_SPIN_TIME    1000    /*[ms]*/
@@ -275,16 +275,16 @@
 #endif
 
 /*Image Button (dependencies: lv_btn*/
-#define USE_LV_IMGBTN   1
+#define USE_LV_IMGBTN   0
 
 /*Button matrix (dependencies: -)*/
 #define USE_LV_BTNM     1
 
 /*Keyboard (dependencies: lv_btnm)*/
-#define USE_LV_KB       1
+#define USE_LV_KB       0
 
 /*Check box (dependencies: lv_btn, lv_label)*/
-#define USE_LV_CB       1
+#define USE_LV_CB       0
 
 /*List (dependencies: lv_page, lv_btn, lv_label, (lv_img optionally for icons ))*/
 #define USE_LV_LIST     1
@@ -305,10 +305,10 @@
 #endif
 
 /*Slider (dependencies: lv_bar)*/
-#define USE_LV_SLIDER    1
+#define USE_LV_SLIDER    0
 
 /*Switch (dependencies: lv_slider)*/
-#define USE_LV_SW       1
+#define USE_LV_SW       0
 
 /*************************
  * Non-user section

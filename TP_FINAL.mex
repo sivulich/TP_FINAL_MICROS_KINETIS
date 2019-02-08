@@ -43,12 +43,22 @@
                         <data>true</data>
                      </feature>
                   </dependency>
+                  <dependency resourceType="Peripheral" resourceId="DMA" description="Peripheral DMA is not initialized" problem_level="1" source="Pins:BOARD_InitPins">
+                     <feature name="initialized" evaluation="equal">
+                        <data>true</data>
+                     </feature>
+                  </dependency>
                   <dependency resourceType="SWComponent" resourceId="platform.drivers.common" description="Pins initialization requires the COMMON Driver in the project." problem_level="2" source="Pins:BOARD_InitPins">
                      <feature name="enabled" evaluation="equal" configuration="core0">
                         <data>true</data>
                      </feature>
                   </dependency>
                   <dependency resourceType="SWComponent" resourceId="platform.drivers.port" description="Pins initialization requires the PORT Driver in the project." problem_level="2" source="Pins:BOARD_InitPins">
+                     <feature name="enabled" evaluation="equal" configuration="core0">
+                        <data>true</data>
+                     </feature>
+                  </dependency>
+                  <dependency resourceType="SWComponent" resourceId="platform.drivers.dmamux" description="Pins initialization requires the DMAMUX Driver in the project." problem_level="2" source="Pins:BOARD_InitPins">
                      <feature name="enabled" evaluation="equal" configuration="core0">
                         <data>true</data>
                      </feature>
@@ -135,6 +145,7 @@
                   <pin peripheral="SPI0" signal="PCS0_SS" pin_num="93" pin_signal="PTD0/LLWU_P12/SPI0_PCS0/UART2_RTS_b/FTM3_CH0/FB_ALE/FB_CS1_b/FB_TS_b"/>
                   <pin peripheral="GPIOA" signal="GPIO, 4" pin_num="38" pin_signal="PTA4/LLWU_P3/FTM0_CH1/NMI_b/EZP_CS_b"/>
                   <pin peripheral="GPIOC" signal="GPIO, 6" pin_num="78" pin_signal="CMP0_IN0/PTC6/LLWU_P10/SPI0_SOUT/PDB0_EXTRG/I2S0_RX_BCLK/FB_AD9/I2S0_MCLK"/>
+                  <pin peripheral="DMA" signal="CH, 0" pin_num="" pin_signal="SPI0_Transmit"/>
                </pins>
             </function>
          </functions_list>

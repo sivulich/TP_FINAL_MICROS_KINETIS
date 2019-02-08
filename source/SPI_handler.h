@@ -7,9 +7,13 @@
 #define DISP_SPI_CLK  14
 #define DISP_SPI_CS   5
 
+extern volatile unsigned spiFlush;
+
 void SPI_Handler_Init();
 
-void SPI_Write(uint8_t* data , uint16_t len);
+void SPI_Write_DMA(uint8_t* data , unsigned len);
+
+void SPI_Write_Blocking(uint8_t* data , unsigned len);
 
 #endif
 

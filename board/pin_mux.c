@@ -19,6 +19,7 @@ board: FRDM-K64F
 
 #include "fsl_common.h"
 #include "fsl_port.h"
+#include "fsl_dmamux.h"
 #include "pin_mux.h"
 
 /* FUNCTION ************************************************************************************************************
@@ -62,6 +63,7 @@ BOARD_InitPins:
   - {pin_num: '93', peripheral: SPI0, signal: PCS0_SS, pin_signal: PTD0/LLWU_P12/SPI0_PCS0/UART2_RTS_b/FTM3_CH0/FB_ALE/FB_CS1_b/FB_TS_b}
   - {pin_num: '38', peripheral: GPIOA, signal: 'GPIO, 4', pin_signal: PTA4/LLWU_P3/FTM0_CH1/NMI_b/EZP_CS_b}
   - {pin_num: '78', peripheral: GPIOC, signal: 'GPIO, 6', pin_signal: CMP0_IN0/PTC6/LLWU_P10/SPI0_SOUT/PDB0_EXTRG/I2S0_RX_BCLK/FB_AD9/I2S0_MCLK}
+  - {peripheral: DMA, signal: 'CH, 0', pin_signal: SPI0_Transmit}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -74,6 +76,8 @@ BOARD_InitPins:
  * END ****************************************************************************************************************/
 void BOARD_InitPins(void)
 {
+    /* DMA Mux Clock Gate Control: Clock enabled */
+    CLOCK_EnableClock(kCLOCK_Dmamux0);
     /* Port A Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortA);
     /* Port B Clock Gate Control: Clock enabled */
@@ -84,6 +88,8 @@ void BOARD_InitPins(void)
     CLOCK_EnableClock(kCLOCK_PortD);
     /* Port E Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortE);
+    /* DMA Channel Source (Slot) 0: SPI0 Transmit. */
+    DMAMUX_SetSource(DMAMUX, 0U, (uint8_t)kDmaRequestMux0SPI0Tx);
 
     /* PORTA4 (pin 38) is configured as PTA4 */
     PORT_SetPinMux(BOARD_INITPINS_SW3_PORT, BOARD_INITPINS_SW3_PIN, kPORT_MuxAsGpio);

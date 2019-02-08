@@ -159,6 +159,7 @@ int main(void)
 	lv_disp_drv_init(&disp);
 	disp.disp_flush = ili9431_flush;
 	disp.disp_fill = ili9431_fill;
+	disp.disp_map = ili9431_map;
 	lv_disp_drv_register(&disp);
 
 	InputHandlerInit();
