@@ -207,7 +207,7 @@ void SPI_Write_DMA(uint8_t* data , unsigned len)
 void SPI_Write_Blocking(uint8_t* data , unsigned len)
 {
 	SPI_Write_DMA(data ,len);
-	while(isTransferCompleted == false)
+	while(isTransferCompleted == false);
 	while(g_dspi_edma_m_handle.state==kDSPI_Busy);
 }
 

@@ -63,7 +63,7 @@
  *=================*/
 
 /*Input device settings*/
-#define LV_INDEV_READ_PERIOD            50                     /*Input device read period in milliseconds*/
+#define LV_INDEV_READ_PERIOD            10                     /*Input device read period in milliseconds*/
 #define LV_INDEV_POINT_MARKER           0                      /*Mark the pressed points  (required: USE_LV_REAL_DRAW = 1)*/
 #define LV_INDEV_DRAG_LIMIT             10                     /*Drag threshold in pixels */
 #define LV_INDEV_DRAG_THROW             20                     /*Drag throw slow-down in [%]. Greater value means faster slow-down */
@@ -85,7 +85,7 @@
 #define USE_LV_SHADOW           1               /*1: Enable shadows*/
 #define USE_LV_GROUP            1               /*1: Enable object groups (for keyboards)*/
 #define USE_LV_GPU              1               /*1: Enable GPU interface*/
-#define USE_LV_REAL_DRAW        1               /*1: Enable function which draw directly to the frame buffer instead of VDB (required if LV_VDB_SIZE = 0)*/
+#define USE_LV_REAL_DRAW        0               /*1: Enable function which draw directly to the frame buffer instead of VDB (required if LV_VDB_SIZE = 0)*/
 #define USE_LV_FILESYSTEM       1               /*1: Enable file system (required by images*/
 
 /*Compiler settings*/
@@ -95,10 +95,10 @@
 #define LV_COMPILER_NON_CONST_INIT_SUPPORTED 0  /* 1: Initialziation woth non constant values are supported (In Visual studio it is not supported)*/
 
 /*HAL settings*/
-#define LV_TICK_CUSTOM     0                        /*1: use a custom tick source (removing the need to manually update the tick with `lv_tick_inc`) */
+#define LV_TICK_CUSTOM     1                        /*1: use a custom tick source (removing the need to manually update the tick with `lv_tick_inc`) */
 #if LV_TICK_CUSTOM == 1
-#define LV_TICK_CUSTOM_INCLUDE  "Arduino.h"         /*Header for the sys time function*/
-#define LV_TICK_CUSTOM_SYS_TIME_EXPR (millis())     /*Expression evaluating to current systime in ms*/
+#define LV_TICK_CUSTOM_INCLUDE  "fsl_sdmmc_event.h"         /*Header for the sys time function*/
+#define LV_TICK_CUSTOM_SYS_TIME_EXPR (SDMMCEVENT_GetMillis())     /*Expression evaluating to current systime in ms*/
 #endif     /*LV_TICK_CUSTOM*/
 
 

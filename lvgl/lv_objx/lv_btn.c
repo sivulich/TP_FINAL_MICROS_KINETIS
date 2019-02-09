@@ -661,12 +661,12 @@ static lv_res_t lv_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * param)
         }
     } else if(sign == LV_SIGNAL_CONTROLL) {
         char c = *((char *)param);
-        if(c == LV_GROUP_KEY_RIGHT || c == LV_GROUP_KEY_UP) {
+        if((c == LV_GROUP_KEY_RIGHT || c == LV_GROUP_KEY_UP)&&0) {//SACAR LOS 0s SANTIS HACK
             if(lv_btn_get_toggle(btn) != false) lv_btn_set_state(btn, LV_BTN_STATE_TGL_REL);
             if(ext->actions[LV_BTN_ACTION_CLICK] && lv_btn_get_state(btn) != LV_BTN_STATE_INA) {
                 res = ext->actions[LV_BTN_ACTION_CLICK](btn);
             }
-        } else if(c == LV_GROUP_KEY_LEFT || c == LV_GROUP_KEY_DOWN) {
+        } else if((c == LV_GROUP_KEY_LEFT || c == LV_GROUP_KEY_DOWN)&&0) {
             if(lv_btn_get_toggle(btn) != false) lv_btn_set_state(btn, LV_BTN_STATE_REL);
             if(ext->actions[LV_BTN_ACTION_CLICK] && lv_btn_get_state(btn) != LV_BTN_STATE_INA) {
                 res = ext->actions[LV_BTN_ACTION_CLICK](btn);

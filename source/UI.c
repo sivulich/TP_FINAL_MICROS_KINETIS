@@ -13,11 +13,22 @@
 extern "C" {
 #endif
 	unsigned init(void);
+	static void updateCurrent();
 	static FATFS g_fileSystem; /* File system object */
-	static FIL g_fileObject;   /* File object */
 	static FRESULT error;
 
     const TCHAR driverNumberBuffer[3U] = {SDDISK + '0', ':', '/'};
+
+	static char current[MAX_FILES][MAX_FILE_NAME+1];
+	static char file[MAX_FILE_NAME]=".";
+
+	FILINFO de;  // Pointer for directory entry
+
+	static int i = 0, cnt = 0, newFile = 0, onFile=0, ini = 1,len=1;
+
+	static DIR tmp, dr;
+
+
 
     static const sdmmchost_detect_card_t s_sdCardDetect = {
     #ifndef BOARD_SD_DETECT_TYPE
@@ -25,9 +36,10 @@ extern "C" {
     #else
         .cdType = BOARD_SD_DETECT_TYPE,
     #endif
-        .cdTimeOut_ms = 15U,//(~0U),
+        .cdTimeOut_ms = 1,//(~0U),
     };
 
+    static int pwrOn=0;
 	static status_t sdcardWaitCardInsert(void)
 	{
 		/* Save host information. */
@@ -49,27 +61,36 @@ extern "C" {
 		/* wait card insert */
 		if (SD_WaitCardDetectStatus(SD_HOST_BASEADDR, &s_sdCardDetect, true) == kStatus_Success)
 		{
-			PRINTF("\r\nCard inserted.\r\n");
+			//PRINTF("\r\nCard inserted.\r\n");
 			/* power on the card */
-			SD_PowerOnCard(g_sd.host.base, g_sd.usrParam.pwr);
+			if(pwrOn==0)
+			{
+				pwrOn=1;
+				SD_PowerOnCard(g_sd.host.base, g_sd.usrParam.pwr);
+			}
+
 		}
 		else
 		{
-			PRINTF("\r\nCard detect fail.\r\n");
+			//PRINTF("\r\nCard detect fail.\r\n");
+			pwrOn=0;
+			SD_PowerOffCard(g_sd.host.base,g_sd.usrParam.pwr);
 			return kStatus_Fail;
 		}
 
 		return kStatus_Success;
 	}
 
-	static char current[MAX_FILES][MAX_FILE_NAME+1];
-	static char file[MAX_FILE_NAME]=".";
+	static int checkSdCard()
+	{
+		if (sdcardWaitCardInsert() != kStatus_Success)
+		{
+			ini=2;
+			updateCurrent();
+		}
+		return ini;
+	}
 
-	FILINFO de;  // Pointer for directory entry
-
-	static int i = 0, cnt = 0, newFile = 0, onFile=0, ini = 1,len=1;
-
-	static DIR tmp, dr;
 	static void delLastDir()
 	{
 		for (int k = len - 1; k > 0; k--)
@@ -159,76 +180,93 @@ extern "C" {
 
 
 	char input(char cmd) {
-		if (cmd == 's')
+		checkSdCard();
+		if(ini == 1)
 		{
-			i = i + 1 >= cnt ? 0 : i + 1;
-			return 0;
-		}
-		else if (cmd == 'w')
-		{
-			i = i - 1 < 0 ? cnt-1 : i - 1;
-			return 0;
-		}
-
-		else if (cmd == 'e')
-		{
-
-			if(cnt-1==i)
+			if (cmd == 's')
 			{
-
-				delLastDir();
-				f_opendir(&dr,file);
-
-				updateCurrent();
+				i = i + 1 >= cnt ? 0 : i + 1;
+				return 0;
 			}
-			else
+			else if (cmd == 'w')
 			{
-				FILINFO info;
-				strcat(file, "/");
-				strcat(file, current[i]);
-				len += strlen(current[i]) + 1;
-				FRESULT res = f_stat(file,&info);
-				PRINTF("Current is: %s\n",current[i]);
-				if (res == FR_OK && (info.fattrib&AM_DIR) )
-				{
-					f_opendir(&tmp,current[i]);
-					cnt = 0;
-					i = 0;
-					dr = tmp;
-					updateCurrent();
+				i = i - 1 < 0 ? cnt-1 : i - 1;
+				return 0;
+			}
 
-				}
-				else if(res == FR_OK )
+			else if (cmd == 'e')
+			{
+
+				if(cnt-1==i)
 				{
-					newFile = 1;
-					onFile = 1;
+
+					delLastDir();
+					f_opendir(&dr,file);
+
+					updateCurrent();
 				}
 				else
 				{
-					delLastDir();
+					FILINFO info;
+					strcat(file, "/");
+					strcat(file, current[i]);
+					len += strlen(current[i]) + 1;
+					FRESULT res = f_stat(file,&info);
+					PRINTF("Current is: %s\n",current[i]);
+					if (res == FR_OK && (info.fattrib&AM_DIR) )
+					{
+						f_opendir(&tmp,current[i]);
+						cnt = 0;
+						i = 0;
+						dr = tmp;
+						updateCurrent();
+
+					}
+					else if(res == FR_OK )
+					{
+						newFile = 1;
+						onFile = 1;
+					}
+					else
+					{
+						delLastDir();
+					}
 				}
+
+
+				return 0;
 			}
-
-
-			return 0;
 		}
+
 		return cmd;
 	};
 	char* getPath() {
 		return file;
 	}
 	char* getFile() {
-		if (newFile == 1)
+		checkSdCard();
+
+		if(ini == 1)
 		{
-			
-			newFile = 0;
-			return getPath();
+			if (newFile == 1)
+			{
+
+				newFile = 0;
+				return getPath();
+			}
+			return 0;
 		}
-		return 0;
+		else if(ini == 2)
+		{
+			return (char*)-1;
+		}
+		else
+			return 0;
 	};
 
 	currarr  getCurrent(unsigned* sz, unsigned *pos)
 	{
+		checkSdCard();
 		*sz = cnt;
 		*pos = i;
 		return (currarr)current;

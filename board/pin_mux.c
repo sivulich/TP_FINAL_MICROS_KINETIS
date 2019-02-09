@@ -19,7 +19,6 @@ board: FRDM-K64F
 
 #include "fsl_common.h"
 #include "fsl_port.h"
-#include "fsl_dmamux.h"
 #include "pin_mux.h"
 
 /* FUNCTION ************************************************************************************************************
@@ -63,7 +62,11 @@ BOARD_InitPins:
   - {pin_num: '93', peripheral: SPI0, signal: PCS0_SS, pin_signal: PTD0/LLWU_P12/SPI0_PCS0/UART2_RTS_b/FTM3_CH0/FB_ALE/FB_CS1_b/FB_TS_b}
   - {pin_num: '38', peripheral: GPIOA, signal: 'GPIO, 4', pin_signal: PTA4/LLWU_P3/FTM0_CH1/NMI_b/EZP_CS_b}
   - {pin_num: '78', peripheral: GPIOC, signal: 'GPIO, 6', pin_signal: CMP0_IN0/PTC6/LLWU_P10/SPI0_SOUT/PDB0_EXTRG/I2S0_RX_BCLK/FB_AD9/I2S0_MCLK}
-  - {peripheral: DMA, signal: 'CH, 0', pin_signal: SPI0_Transmit}
+  - {pin_num: '70', peripheral: GPIOC, signal: 'GPIO, 0', pin_signal: ADC0_SE14/PTC0/SPI0_PCS4/PDB0_EXTRG/USB_SOF_OUT/FB_AD14/I2S0_TXD1}
+  - {pin_num: '77', peripheral: GPIOC, signal: 'GPIO, 5', pin_signal: PTC5/LLWU_P9/SPI0_SCK/LPTMR0_ALT2/I2S0_RXD0/FB_AD10/CMP0_OUT/FTM0_CH2}
+  - {pin_num: '79', peripheral: GPIOC, signal: 'GPIO, 7', pin_signal: CMP0_IN1/PTC7/SPI0_SIN/USB_SOF_OUT/I2S0_RX_FS/FB_AD8}
+  - {pin_num: '80', peripheral: GPIOC, signal: 'GPIO, 8', pin_signal: ADC1_SE4b/CMP0_IN2/PTC8/FTM3_CH4/I2S0_MCLK/FB_AD7}
+  - {pin_num: '81', peripheral: GPIOC, signal: 'GPIO, 9', pin_signal: ADC1_SE5b/CMP0_IN3/PTC9/FTM3_CH5/I2S0_RX_BCLK/FB_AD6/FTM2_FLT0}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -76,8 +79,6 @@ BOARD_InitPins:
  * END ****************************************************************************************************************/
 void BOARD_InitPins(void)
 {
-    /* DMA Mux Clock Gate Control: Clock enabled */
-    CLOCK_EnableClock(kCLOCK_Dmamux0);
     /* Port A Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortA);
     /* Port B Clock Gate Control: Clock enabled */
@@ -88,8 +89,6 @@ void BOARD_InitPins(void)
     CLOCK_EnableClock(kCLOCK_PortD);
     /* Port E Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortE);
-    /* DMA Channel Source (Slot) 0: SPI0 Transmit. */
-    DMAMUX_SetSource(DMAMUX, 0U, (uint8_t)kDmaRequestMux0SPI0Tx);
 
     /* PORTA4 (pin 38) is configured as PTA4 */
     PORT_SetPinMux(BOARD_INITPINS_SW3_PORT, BOARD_INITPINS_SW3_PIN, kPORT_MuxAsGpio);
@@ -100,14 +99,29 @@ void BOARD_InitPins(void)
     /* PORTB17 (pin 63) is configured as UART0_TX */
     PORT_SetPinMux(BOARD_INITPINS_DEBUG_UART_TX_PORT, BOARD_INITPINS_DEBUG_UART_TX_PIN, kPORT_MuxAlt3);
 
+    /* PORTC0 (pin 70) is configured as PTC0 */
+    PORT_SetPinMux(PORTC, 0U, kPORT_MuxAsGpio);
+
     /* PORTC2 (pin 72) is configured as PTC2 */
     PORT_SetPinMux(PORTC, 2U, kPORT_MuxAsGpio);
 
     /* PORTC3 (pin 73) is configured as PTC3 */
     PORT_SetPinMux(PORTC, 3U, kPORT_MuxAsGpio);
 
+    /* PORTC5 (pin 77) is configured as PTC5 */
+    PORT_SetPinMux(PORTC, 5U, kPORT_MuxAsGpio);
+
     /* PORTC6 (pin 78) is configured as PTC6 */
     PORT_SetPinMux(PORTC, 6U, kPORT_MuxAsGpio);
+
+    /* PORTC7 (pin 79) is configured as PTC7 */
+    PORT_SetPinMux(BOARD_INITPINS_CMP0_IN1_PORT, BOARD_INITPINS_CMP0_IN1_PIN, kPORT_MuxAsGpio);
+
+    /* PORTC8 (pin 80) is configured as PTC8 */
+    PORT_SetPinMux(PORTC, 8U, kPORT_MuxAsGpio);
+
+    /* PORTC9 (pin 81) is configured as PTC9 */
+    PORT_SetPinMux(PORTC, 9U, kPORT_MuxAsGpio);
 
     /* PORTD0 (pin 93) is configured as SPI0_PCS0 */
     PORT_SetPinMux(PORTD, 0U, kPORT_MuxAlt2);

@@ -6,7 +6,6 @@
  */
 #include "MP3Decoder.h"
 #include "ff.h"
-#include "./helix/pub/mp3dec.h"
 #include "fsl_debug_console.h"
 #include "ID3V1/read_id3.h"
 #include <stdlib.h>
@@ -122,7 +121,12 @@ static void unloadFile()
 	sz=0, frames = 0, skipped = 0,lastPos=MP3_BUFFER_SIZE,bufSize=MP3_BUFFER_SIZE,duration=0;
 	return;
 }
-
+MP3FrameInfo getFrameInfo()
+{
+	MP3FrameInfo finfo;
+	MP3GetLastFrameInfo(dec, &finfo);
+	return finfo;
+}
 static long long decode(short * out,unsigned* len)
 {
 	if(sz > 0)
@@ -151,7 +155,7 @@ static long long decode(short * out,unsigned* len)
 			else
 				duration = sz*8000LL/info.bitrate;
 			frames++;
-			*len=1152*info.nChans;
+			*len=info.outputSamps;
 		}
 		else if (code ==-1)
 			return MP3DEC.decode(out,len);
@@ -188,4 +192,4 @@ static void init()
 	sz=0, frames = 0, skipped = 0,lastPos=MP3_BUFFER_SIZE,bufSize=MP3_BUFFER_SIZE,duration=0;
 }
 
-struct MP3DEC_ MP3DEC={.init=init,.decode=decode,.loadFile=loadFile,.unloadFile=unloadFile,.getMP3Info=getMP3Info,.onFile=onFile};
+struct MP3DEC_ MP3DEC={.init=init,.decode=decode,.loadFile=loadFile,.unloadFile=unloadFile,.getMP3Info=getMP3Info,.onFile=onFile,.getFrameInfo=getFrameInfo};

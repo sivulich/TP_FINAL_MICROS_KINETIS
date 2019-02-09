@@ -8,4 +8,6 @@ void InputHandlerInit(void);
 
 bool InputHandlerRead(lv_indev_data_t * data);
 
+void InputUpdate();
+
 #endif

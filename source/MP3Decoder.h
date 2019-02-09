@@ -1,10 +1,13 @@
 #ifndef MP3DECODER_H
 #define MP3DECODER_H
 
+#include "./helix/pub/mp3dec.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 typedef struct MP3DEC_ MP3DEC_;
+
 
 extern MP3DEC_ MP3DEC;
 
@@ -18,6 +21,8 @@ struct MP3DEC_{
 	long long (*decode)(short * out,unsigned* len);
 
 	unsigned char* (*getMP3Info)(const char* tag,int* size);
+
+	MP3FrameInfo (*getFrameInfo)();
 
 	int (*onFile)();
 
