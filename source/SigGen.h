@@ -23,7 +23,6 @@ struct SigGen_{
 	int (*status)();
 	int (*pause)();
 	int (*stop)();
-	int (*update)();
 };
 
 #if defined(__cplusplus)

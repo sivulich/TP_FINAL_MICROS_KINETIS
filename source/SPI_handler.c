@@ -23,7 +23,7 @@
 #define EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER kDSPI_MasterPcs0
 #define EXAMPLE_DSPI_DEALY_COUNT 0xfffffU
 #define TRANSFER_SIZE  (240*320*3)         /* Transfer dataSize */
-#define TRANSFER_BAUDRATE 10000000U /* Transfer baudrate - 50M */
+#define TRANSFER_BAUDRATE 50000000U /* Transfer baudrate - 50M */
 
 /*******************************************************************************
  * Prototypes
@@ -206,8 +206,26 @@ void SPI_Write_DMA(uint8_t* data , unsigned len)
 
 void SPI_Write_Blocking(uint8_t* data , unsigned len)
 {
-	SPI_Write_DMA(data ,len);
-	while(isTransferCompleted == false);
-	while(g_dspi_edma_m_handle.state==kDSPI_Busy);
+	if (len == 0) return;           //no need to send anything
+	messageLen = len;
+	messageData = data;
+	if(len>32000)
+	{
+		len=32000;
+		messageLen-=32000;
+		messageData+=32000;
+	}
+	else
+	{
+		messageLen=0;
+	}
+	masterXfer.txData = data;
+	masterXfer.dataSize = len;
+	masterXfer.rxData = NULL;
+	masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
+	status_t ret = DSPI_MasterTransferBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &masterXfer);
+	isTransferCompleted = true;
+	if (kStatus_Success != ret )
+		PRINTF("There is error when start DSPI_MasterTransferEDMA \r\n ");
 }
 

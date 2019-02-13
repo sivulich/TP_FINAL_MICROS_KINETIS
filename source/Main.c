@@ -102,15 +102,20 @@ int main(void)
 
 	ili9431_init();
 
-
+	int play=1;
+	unsigned buffLen;
+	short buff[MP3_BUFFER_SIZE];
+	short* outBuff[2]={buff,buff+MP3_BUFFER_SIZE/2};
+	int len=0,dur=0;
+	long long pos=0;
 
 	lv_disp_drv_init(&disp);
 	disp.disp_flush = ili9431_flush;
-	disp.disp_fill = ili9431_fill;
+	//disp.disp_fill = ili9431_fill;
 	disp.disp_map = ili9431_map;
 	lv_disp_drv_register(&disp);
 
-	InputHandlerInit();
+	InputHandlerInit(&play);
 	kb_drv.type = LV_INDEV_TYPE_KEYPAD;
 	kb_drv.read = InputHandlerRead;
 	kb_indev = lv_indev_drv_register(&kb_drv);
@@ -119,11 +124,7 @@ int main(void)
 	MP3UiCreate(&kb_drv);
 	MP3DEC.init();
 	SigGen.init();
-	int play=1;
-	unsigned buffLen;
-	short outBuff[2][MP3_BUFFER_SIZE];
-	int len=0,dur=0;
-	long long pos=0;
+
 
 
 	while (1) {
@@ -138,18 +139,23 @@ int main(void)
 				MP3DEC.unloadFile();
 				MP3DEC.loadFile(file);
 				dur=MP3DEC.decode(outBuff[0],&buffLen);
+				memset(buff,2048,MP3_BUFFER_SIZE);
 				MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1);
 				while(len<=0)
 					len=MP3DEC.decode(outBuff[0],&buffLen);
 				MP3FrameInfo finfo=MP3DEC.getFrameInfo();
+
 				SigGen.stop();
 				SigGen.setupSignal(outBuff[0],outBuff[1],finfo.outputSamps,finfo.samprate*finfo.nChans);
 				SigGen.start();
 				len=0;
 				pos=0;
+				play=1;
+				len+=MP3DEC.decode(outBuff[1],&buffLen);
 			}
 			if(play==1 && MP3DEC.onFile()==1)
 			{
+				SigGen.start();
 				int status = SigGen.status();
 				if(status!=0)
 				{
@@ -175,13 +181,17 @@ int main(void)
 
 
 			}
+			else if(play==0)
+			{
+				SigGen.pause();
+			}
+		}
+		else
+		{
+			SigGen.stop();
 		}
 		InputUpdate();
-		SigGen.update();
 		lv_task_handler();
-
-		//if(SDMMCEVENT_GetMillis()-t>0)
-			//lv_tick_inc(SDMMCEVENT_GetMillis()-t);
 	}
 
 	printf("Thanks for using MP3\n");

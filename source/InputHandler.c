@@ -2,11 +2,21 @@
 #include "fsl_gpio.h"
 #include "../lv_conf.h"
 
-static lv_indev_state_t state;
+#define FORWARD_GPIO GPIOC,5
+#define BACKWARD_GPIO GPIOC,0
+#define PLAY_GPIO GPIOC,7
+#define A_GPIO GPIOC,1
+#define ENTER_GPIO GPIOC,8
+#define B_GPIO GPIOC,9
 
-void InputHandlerInit(void)
+
+
+static lv_indev_state_t state;
+static int* play;
+void InputHandlerInit(int* pl)
 {
 	//Initialize non-SPI GPIOs
+	play=pl;
 	gpio_pin_config_t config = {
 	     kGPIO_DigitalInput,
 	 	 0
@@ -15,18 +25,19 @@ void InputHandlerInit(void)
 	GPIO_PinInit(GPIOA,4, &config);
 	GPIO_PinInit(GPIOC,6, &config);
 
-	GPIO_PinInit(GPIOC,0, &config);		//fordward
-	GPIO_PinInit(GPIOC,5, &config);		//back
-	GPIO_PinInit(GPIOC,7, &config);		//play/pause
-	GPIO_PinInit(GPIOC,9, &config);		//A
-	GPIO_PinInit(GPIOC,8, &config);		//B
+	GPIO_PinInit(FORWARD_GPIO, &config);		//fordward
+	GPIO_PinInit(BACKWARD_GPIO, &config);		//backward
+	GPIO_PinInit(PLAY_GPIO, &config);		//play/pause
+	GPIO_PinInit(A_GPIO, &config);		//A
+	GPIO_PinInit(ENTER_GPIO, &config);     //Enter
+	GPIO_PinInit(B_GPIO, &config);		//B
 }
 static int lastEnc=0b11,newEnc,storeEnc,cnt=0;;
 static lv_indev_state_t encKey=LV_GROUP_KEY_ESC;
 static int lastEncCnt=0;
 void InputUpdate()
 {
-	newEnc=(GPIO_PinRead(GPIOC,9)<<1) | GPIO_PinRead(GPIOC,8);
+	newEnc=(GPIO_PinRead(A_GPIO)<<1) | GPIO_PinRead(B_GPIO);
 	if(lastEnc!=newEnc && storeEnc!=0b010010 && storeEnc!=0b100001)
 	{
 		if(lastEncCnt>=4)
@@ -43,20 +54,25 @@ void InputUpdate()
 	//lastEnc=newEnc;
 
 }
+static int playPressed=0;
 bool InputHandlerRead(lv_indev_data_t * data)
 {
 	newEnc=(GPIO_PinRead(GPIOC,9)<<1) | GPIO_PinRead(GPIOC,8);
-	if(GPIO_PinRead(GPIOC,5)==0)
+	if(GPIO_PinRead(BACKWARD_GPIO)==0)
 	{
 		data->key = LV_GROUP_KEY_PREV;
 		state=LV_INDEV_STATE_PR;
 	}
-	else if(GPIO_PinRead(GPIOC,0)==0)
+	else if(GPIO_PinRead(FORWARD_GPIO)==0)
 	{
 		data->key=LV_GROUP_KEY_NEXT;
 		state=LV_INDEV_STATE_PR;
 	}
-	else if(GPIO_PinRead(GPIOA,4)==0)
+	else if(GPIO_PinRead(PLAY_GPIO)==0)
+	{
+		playPressed=1;
+	}
+	/*else if(GPIO_PinRead(GPIOA,4)==0)
 	{
 		data->key = LV_GROUP_KEY_LEFT;
 		state=LV_INDEV_STATE_PR;
@@ -66,35 +82,13 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		data->key=LV_GROUP_KEY_RIGHT;
 
 		state=LV_INDEV_STATE_PR;
-	}
-	else if(GPIO_PinRead(GPIOC,7)==0)
+	}*/
+	else if(GPIO_PinRead(ENTER_GPIO)==0)
 	{
 		data->key=LV_GROUP_KEY_ENTER;
 
 		state=LV_INDEV_STATE_PR;
 	}
-	//else if(newEnc!=0b11 && cnt==0) //ESTO ANDABA PERO MEDIO CABEZA Y SE EQUIVOCA
-	//{
-		/*if(last==0b11 && new==0b01)
-		{
-			data->key = LV_GROUP_KEY_LEFT;
-			encKey=LV_GROUP_KEY_LEFT;
-			state=LV_INDEV_STATE_PR;
-		}
-		else if(last==0b11 && new==0b10)
-		{
-			data->key=LV_GROUP_KEY_RIGHT;
-			encKey=LV_GROUP_KEY_RIGHT;
-			state=LV_INDEV_STATE_PR;
-		}
-		else
-		{
-			data->key=encKey;
-			state=LV_INDEV_STATE_PR;
-		}*/
-		//if(lastEnc!=newEnc)
-		//{
-			//storeEnc=((storeEnc<<2)|newEnc)&0b111111;
 	else if(storeEnc==0b010010 && cnt==0)
 	{
 		data->key = LV_GROUP_KEY_LEFT;
@@ -109,11 +103,13 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		state=LV_INDEV_STATE_PR;
 		cnt++;
 	}
-		//}
-
-	//}
 	else
 	{
+		if(playPressed==1)
+		{
+			*play^=1;
+			playPressed=0;
+		}
 		if(encKey!=LV_GROUP_KEY_ESC && cnt<2)
 		{
 			data->key=encKey;
