@@ -71,6 +71,7 @@ BOARD_InitPins:
   - {pin_num: '81', peripheral: GPIOC, signal: 'GPIO, 9', pin_signal: ADC1_SE5b/CMP0_IN3/PTC9/FTM3_CH5/I2S0_RX_BCLK/FB_AD6/FTM2_FLT0}
   - {peripheral: DMA, signal: 'CH, 3', pin_signal: AlwaysOn58_Request}
   - {pin_num: '71', peripheral: GPIOC, signal: 'GPIO, 1', pin_signal: ADC0_SE15/PTC1/LLWU_P6/SPI0_PCS3/UART1_RTS_b/FTM0_CH0/FB_AD13/I2S0_TXD0}
+  - {pin_num: '26', peripheral: VREF, signal: OUT, pin_signal: VREF_OUT/CMP1_IN5/CMP0_IN5/ADC1_SE18}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */

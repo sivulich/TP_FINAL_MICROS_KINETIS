@@ -134,7 +134,13 @@ void SPI_Handler_Init()
 	EDMA_GetDefaultConfig(&userConfig);
 
 	EDMA_Init(EXAMPLE_DSPI_MASTER_DMA_BASEADDR, &userConfig);
-
+	/*edma_channel_Preemption_config_t priorityConfig;
+	priorityConfig.channelPriority=1;
+	priorityConfig.enableChannelPreemption=1;
+	priorityConfig.enablePreemptAbility=0;
+	EDMA_SetChannelPreemptionConfig(EXAMPLE_DSPI_MASTER_DMA_BASEADDR,masterTxChannel,&priorityConfig);*/
+	//EDMA_SetBandWidth(EXAMPLE_DSPI_MASTER_DMA_BASEADDR,masterTxChannel,kEDMA_BandwidthStall8Cycle);
+	//EDMA_SetBandWidth(EXAMPLE_DSPI_MASTER_DMA_BASEADDR,masterRxChannel,kEDMA_BandwidthStall8Cycle);
 
 	DSPI_MasterGetDefaultConfig(&masterConfig);
 	masterConfig.whichCtar = kDSPI_Ctar0;

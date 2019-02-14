@@ -11,7 +11,7 @@
 #include "fsl_dac.h"
 #include "fsl_edma.h"
 #include "fsl_dmamux.h"
-
+#include "fsl_vref.h"
 
 #define KINETIS_DAC_INSTANCE       DAC0
 #define PIT_DATA_HANDLER PIT3_IRQHandler
@@ -71,8 +71,18 @@ void EDMA_Callback(edma_handle_t *handle, void *param, bool transferDone, uint32
 
 static int init()
 {
+	/*vref_config_t vrefConfig;
+	VREF_GetDefaultConfig(&vrefConfig);
+	// Initialize the VREF mode.
+	VREF_Init(VREF, &vrefConfig);
+	uint8_t val = VREF_GetTrimVal(VREF);
+	VREF_SetTrimVal(VREF, 0x3F/1000);
+	val = VREF_GetTrimVal(VREF);
+	VREF_SetTrimVal(VREF, 0x3F);*/
+
 	dac_config_t dacConfigStruct;
 	DAC_GetDefaultConfig(&dacConfigStruct);
+	//dacConfigStruct.referenceVoltageSource=kDAC_ReferenceVoltageSourceVref1;
 	DAC_Init(KINETIS_DAC_INSTANCE, &dacConfigStruct);
 	DAC_SetBufferReadPointer(KINETIS_DAC_INSTANCE, 0U);
 
@@ -99,6 +109,11 @@ static int init()
 	EDMA_Init(EXAMPLE_DMA, &userConfig);
 	EDMA_CreateHandle(&g_EDMA_Handle, EXAMPLE_DMA, CHANNEL_DMA);
 	EDMA_SetCallback(&g_EDMA_Handle, EDMA_Callback, NULL);
+	/*edma_channel_Preemption_config_t priorityConfig;
+	priorityConfig.channelPriority=0;
+	priorityConfig.enableChannelPreemption=0;
+	priorityConfig.enablePreemptAbility=1;
+	EDMA_SetChannelPreemptionConfig(EXAMPLE_DMA,CHANNEL_DMA,&priorityConfig);*/
 	return 0;
 }
 

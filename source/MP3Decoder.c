@@ -156,8 +156,7 @@ static long long decode(short * out,unsigned* len)
 				duration = sz*8000LL/info.bitrate;
 			frames++;
 			*len=info.outputSamps;
-			for(int i=0;i<info.outputSamps;i++)
-				out[i]=((((int)out[i] + 32768))>>4)/2;
+
 		}
 		else if (code ==-1)
 			return MP3DEC.decode(out,len);

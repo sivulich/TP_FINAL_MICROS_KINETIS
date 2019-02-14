@@ -45,36 +45,6 @@ static lv_indev_t * kb_indev;
 static lv_disp_drv_t disp;
 
 
-/* @brief decription about the read/write buffer
-* The size of the read/write buffer should be a multiple of 512, since SDHC/SDXC card uses 512-byte fixed
-* block length and this driver example is enabled with a SDHC/SDXC card.If you are using a SDSC card, you
-* can define the block length by yourself if the card supports partial access.
-* The address of the read/write buffer should align to the specific DMA data buffer address align value if
-* DMA transfer is used, otherwise the buffer address is not important.
-* At the same time buffer address/size should be aligned to the cache line size if cache is supported.
-*/
-/*
-SDK_ALIGN(uint8_t g_bufferWrite[SDK_SIZEALIGN(BUFFER_SIZE, SDMMC_DATA_BUFFER_ALIGN_CACHE)],
-          MAX(SDMMC_DATA_BUFFER_ALIGN_CACHE, SDMMCHOST_DMA_BUFFER_ADDR_ALIGN));
-SDK_ALIGN(uint8_t g_bufferRead[SDK_SIZEALIGN(BUFFER_SIZE, SDMMC_DATA_BUFFER_ALIGN_CACHE)],
-          MAX(SDMMC_DATA_BUFFER_ALIGN_CACHE, SDMMCHOST_DMA_BUFFER_ADDR_ALIGN));*/
-/*! @brief SDMMC host detect card configuration */
-
-
-/*! @brief SDMMC card power control configuration */
-#if defined DEMO_SDCARD_POWER_CTRL_FUNCTION_EXIST
-static const sdmmchost_pwr_card_t s_sdCardPwrCtrl = {
-    .powerOn = BOARD_PowerOnSDCARD, .powerOnDelay_ms = 500U, .powerOff = BOARD_PowerOffSDCARD, .powerOffDelay_ms = 0U,
-};
-#endif
-/*******************************************************************************
- * Code
- ******************************************************************************/
-
-/*!
- * @brief Main function
- */
-
 /******************************************************************************/
 
 
@@ -86,7 +56,38 @@ int checkMP3file(char* fn, unsigned sz)
 }
 
 
-
+/*Volume MAP*/
+static int volume=20;
+static float volumeMap[] = {	0.00398107170553497,
+						0.00493291291186596,
+						0.00611233145140850,
+						0.00757373917589501,
+						0.00938455735924933,
+						0.0116283271424690,
+						0.0144085636600656,
+						0.0178535316561522,
+						0.0221221629107045,
+						0.0274113884733337,
+						0.0339652239733048,
+						0.0420860271517816,
+						0.0521484469766079,
+						0.0646167078746697,
+						0.0800660264807754,
+						0.0992091489534587,
+						0.122929233142759,
+						0.152320592611433,
+						0.188739182213510,
+						0.233865154355699,
+						0.289780371941764,
+						0.359064454018608,
+						0.444913785139290,
+						0.551288978877067,
+						0.683097598641883,
+						0.846420565527684,
+						1.04879269839711,
+						1.29955032877224,
+						1.61026202756094,
+						1.99526231496888};
 
 /*******************************************************************************/
 int main(void)
@@ -151,6 +152,7 @@ int main(void)
 				len=0;
 				pos=0;
 				play=1;
+				len+=MP3DEC.decode(outBuff[0],&buffLen);
 				len+=MP3DEC.decode(outBuff[1],&buffLen);
 			}
 			if(play==1 && MP3DEC.onFile()==1)
@@ -161,6 +163,8 @@ int main(void)
 				{
 					int currBuff = status-1;
 					int ret = MP3DEC.decode(outBuff[currBuff],&buffLen);
+					for(int i=0;i<buffLen;i++)
+						outBuff[currBuff][i]=(((((int)outBuff[currBuff][i] + 32768))>>4))/2;
 					len+=ret;
 					if(ret>0 && len>1000)
 					{
