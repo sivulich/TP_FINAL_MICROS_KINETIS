@@ -19,7 +19,6 @@ board: FRDM-K64F
 
 #include "fsl_common.h"
 #include "fsl_port.h"
-#include "fsl_dmamux.h"
 #include "pin_mux.h"
 
 /* FUNCTION ************************************************************************************************************
@@ -63,15 +62,14 @@ BOARD_InitPins:
   - {pin_num: '93', peripheral: SPI0, signal: PCS0_SS, pin_signal: PTD0/LLWU_P12/SPI0_PCS0/UART2_RTS_b/FTM3_CH0/FB_ALE/FB_CS1_b/FB_TS_b}
   - {pin_num: '38', peripheral: GPIOA, signal: 'GPIO, 4', pin_signal: PTA4/LLWU_P3/FTM0_CH1/NMI_b/EZP_CS_b}
   - {pin_num: '78', peripheral: GPIOC, signal: 'GPIO, 6', pin_signal: CMP0_IN0/PTC6/LLWU_P10/SPI0_SOUT/PDB0_EXTRG/I2S0_RX_BCLK/FB_AD9/I2S0_MCLK}
-  - {peripheral: DMA, signal: 'CH, 0', pin_signal: SPI0_Transmit}
   - {pin_num: '70', peripheral: GPIOC, signal: 'GPIO, 0', pin_signal: ADC0_SE14/PTC0/SPI0_PCS4/PDB0_EXTRG/USB_SOF_OUT/FB_AD14/I2S0_TXD1}
   - {pin_num: '77', peripheral: GPIOC, signal: 'GPIO, 5', pin_signal: PTC5/LLWU_P9/SPI0_SCK/LPTMR0_ALT2/I2S0_RXD0/FB_AD10/CMP0_OUT/FTM0_CH2}
   - {pin_num: '79', peripheral: GPIOC, signal: 'GPIO, 7', pin_signal: CMP0_IN1/PTC7/SPI0_SIN/USB_SOF_OUT/I2S0_RX_FS/FB_AD8}
   - {pin_num: '80', peripheral: GPIOC, signal: 'GPIO, 8', pin_signal: ADC1_SE4b/CMP0_IN2/PTC8/FTM3_CH4/I2S0_MCLK/FB_AD7}
   - {pin_num: '81', peripheral: GPIOC, signal: 'GPIO, 9', pin_signal: ADC1_SE5b/CMP0_IN3/PTC9/FTM3_CH5/I2S0_RX_BCLK/FB_AD6/FTM2_FLT0}
-  - {peripheral: DMA, signal: 'CH, 3', pin_signal: AlwaysOn58_Request}
   - {pin_num: '71', peripheral: GPIOC, signal: 'GPIO, 1', pin_signal: ADC0_SE15/PTC1/LLWU_P6/SPI0_PCS3/UART1_RTS_b/FTM0_CH0/FB_AD13/I2S0_TXD0}
-  - {pin_num: '26', peripheral: VREF, signal: OUT, pin_signal: VREF_OUT/CMP1_IN5/CMP0_IN5/ADC1_SE18}
+  - {pin_num: '64', peripheral: FTM2, signal: 'QD_PH, A', pin_signal: PTB18/CAN0_TX/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA}
+  - {pin_num: '65', peripheral: FTM2, signal: 'QD_PH, B', pin_signal: PTB19/CAN0_RX/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -84,8 +82,6 @@ BOARD_InitPins:
  * END ****************************************************************************************************************/
 void BOARD_InitPins(void)
 {
-    /* DMA Mux Clock Gate Control: Clock enabled */
-    CLOCK_EnableClock(kCLOCK_Dmamux0);
     /* Port A Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortA);
     /* Port B Clock Gate Control: Clock enabled */
@@ -96,10 +92,6 @@ void BOARD_InitPins(void)
     CLOCK_EnableClock(kCLOCK_PortD);
     /* Port E Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortE);
-    /* DMA Channel Source (Slot) 0: SPI0 Transmit. */
-    DMAMUX_SetSource(DMAMUX, 0U, (uint8_t)kDmaRequestMux0SPI0Tx);
-    /* DMA Channel Source (Slot) 3: DMAMUX Always Enabled slot. */
-    DMAMUX_SetSource(DMAMUX, 3U, (uint8_t)kDmaRequestMux0AlwaysOn58);
 
     /* PORTA4 (pin 38) is configured as PTA4 */
     PORT_SetPinMux(BOARD_INITPINS_SW3_PORT, BOARD_INITPINS_SW3_PIN, kPORT_MuxAsGpio);
@@ -109,6 +101,12 @@ void BOARD_InitPins(void)
 
     /* PORTB17 (pin 63) is configured as UART0_TX */
     PORT_SetPinMux(BOARD_INITPINS_DEBUG_UART_TX_PORT, BOARD_INITPINS_DEBUG_UART_TX_PIN, kPORT_MuxAlt3);
+
+    /* PORTB18 (pin 64) is configured as FTM2_QD_PHA */
+    PORT_SetPinMux(PORTB, 18U, kPORT_MuxAlt6);
+
+    /* PORTB19 (pin 65) is configured as FTM2_QD_PHB */
+    PORT_SetPinMux(PORTB, 19U, kPORT_MuxAlt6);
 
     /* PORTC0 (pin 70) is configured as PTC0 */
     PORT_SetPinMux(PORTC, 0U, kPORT_MuxAsGpio);

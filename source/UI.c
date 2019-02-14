@@ -111,7 +111,7 @@ extern "C" {
 		i=0;
 		if(ini==1)
 		{
-			while (f_readdir(&dr,&de) == FR_OK && de.fname[0]!=0 && cnt < 255)
+			while (f_readdir(&dr,&de) == FR_OK && de.fname[0]!=0 && cnt < MAX_FILES-1)
 			{
 				if((de.fattrib & AM_HID) == 0 && (de.fattrib & AM_SYS) == 0)
 				{

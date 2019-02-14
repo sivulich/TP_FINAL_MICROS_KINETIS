@@ -134,7 +134,7 @@ static long long decode(short * out,unsigned* len)
 		memcpy(mp3file,mp3file+lastPos,MP3_BUFFER_SIZE-lastPos);
 		f_read(&fp,mp3file+MP3_BUFFER_SIZE-lastPos,lastPos,&br);
 		//Mover a load File
-		int off = MP3FindSyncWord(mp3file, sz);
+		int off = MP3FindSyncWord(mp3file, MP3_BUFFER_SIZE);
 		if(headerSize==0)
 			headerSize=off;
 		else

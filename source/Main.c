@@ -97,7 +97,6 @@ int main(void)
     BOARD_BootClockRUN();
     BOARD_InitDebugConsole();
 
-
 	/*Initialize LittlevGL*/
 	lv_init();
 
@@ -105,9 +104,10 @@ int main(void)
 
 	int play=1;
 	unsigned buffLen;
-	short buff[MP3_BUFFER_SIZE];
-	short* outBuff[2]={buff,buff+MP3_BUFFER_SIZE/2};
-	int len=0,dur=0;
+	short buff[MP3_BUFFER_SIZE*4];
+	short* outBuff[8]={buff,buff+MP3_BUFFER_SIZE/2,buff+MP3_BUFFER_SIZE,buff+MP3_BUFFER_SIZE*3/2,
+					   buff+MP3_BUFFER_SIZE*2,buff+MP3_BUFFER_SIZE*5/2,buff+MP3_BUFFER_SIZE*3,buff+MP3_BUFFER_SIZE*7/2};
+	int len=0,dur=0,lastStatus;
 	long long pos=0;
 
 	lv_disp_drv_init(&disp);
@@ -139,7 +139,9 @@ int main(void)
 			{
 				MP3DEC.unloadFile();
 				MP3DEC.loadFile(file);
-				dur=MP3DEC.decode(outBuff[0],&buffLen);
+				dur =0;
+				while(dur<=0)
+					dur=MP3DEC.decode(outBuff[0],&buffLen);
 				memset(buff,2048,MP3_BUFFER_SIZE);
 				MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1);
 				while(len<=0)
@@ -147,13 +149,20 @@ int main(void)
 				MP3FrameInfo finfo=MP3DEC.getFrameInfo();
 
 				SigGen.stop();
-				SigGen.setupSignal(outBuff[0],outBuff[1],finfo.outputSamps,finfo.samprate*finfo.nChans);
+				SigGen.setupSignal(outBuff,8,finfo.outputSamps,finfo.samprate*finfo.nChans);
 				SigGen.start();
 				len=0;
 				pos=0;
 				play=1;
 				len+=MP3DEC.decode(outBuff[0],&buffLen);
 				len+=MP3DEC.decode(outBuff[1],&buffLen);
+				len+=MP3DEC.decode(outBuff[2],&buffLen);
+				len+=MP3DEC.decode(outBuff[3],&buffLen);
+				len+=MP3DEC.decode(outBuff[4],&buffLen);
+				len+=MP3DEC.decode(outBuff[5],&buffLen);
+				len+=MP3DEC.decode(outBuff[6],&buffLen);
+				len+=MP3DEC.decode(outBuff[7],&buffLen);
+				lastStatus=1;
 			}
 			if(play==1 && MP3DEC.onFile()==1)
 			{
@@ -162,25 +171,35 @@ int main(void)
 				if(status!=0)
 				{
 					int currBuff = status-1;
-					int ret = MP3DEC.decode(outBuff[currBuff],&buffLen);
-					for(int i=0;i<buffLen;i++)
-						outBuff[currBuff][i]=(((((int)outBuff[currBuff][i] + 32768))>>4))/2;
-					len+=ret;
-					if(ret>0 && len>1000)
+					int circ=lastStatus-1;
+					if(currBuff<circ)
+						currBuff+=8;
+					while(circ<currBuff)
 					{
-						pos+=len;
-						MP3UiSetSongInfo(NULL,NULL,pos/1000,0);
-						len=0;
+						circ++;
+						int ret = MP3DEC.decode(outBuff[circ%8],&buffLen);
+						for(int i=0;i<buffLen;i++)
+							outBuff[circ%8][i]=(((((int)outBuff[circ%8][i] + 32768))>>4))/2;
+						len+=ret;
+						if(ret>0 && len>1000)
+						{
+							pos+=len;
+							MP3UiSetSongInfo(NULL,NULL,pos/1000,0);
+							len=0;
+						}
+						else if(ret<0)
+							PRINTF("ERROR DECODING %d\n",ret);
+						else if(ret  == 0)
+						{
+							PRINTF("Finished Decoding File!\n");
+							MP3UiSetSongInfo(NULL,NULL,dur/1000,0);
+							MP3DEC.unloadFile();
+							SigGen.stop();
+							break;
+						}
+
 					}
-					else if(ret<0)
-						PRINTF("ERROR DECODING %d\n",ret);
-					else if(ret  == 0)
-					{
-						PRINTF("Finished Decoding File!\n");
-						MP3UiSetSongInfo(NULL,NULL,dur/1000,0);
-						MP3DEC.unloadFile();
-						SigGen.stop();
-					}
+					lastStatus=status;
 				}
 
 

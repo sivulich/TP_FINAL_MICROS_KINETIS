@@ -1,5 +1,6 @@
 #include "InputHandler.h"
 #include "fsl_gpio.h"
+#include "fsl_ftm.h"
 #include "../lv_conf.h"
 
 #define FORWARD_GPIO GPIOC,5
@@ -22,6 +23,23 @@ void InputHandlerInit(int* pl)
 	 	 0
 	};
 
+	ftm_config_t configFTM;
+	FTM_GetDefaultConfig(&configFTM);
+	FTM_Init(FTM2, &configFTM);
+
+	ftm_phase_params_t paramsPhase;
+	paramsPhase.enablePhaseFilter = 0;
+	//paramsPhase.phaseFilterVal = xx;
+	paramsPhase.phasePolarity = kFTM_QuadPhaseInvert;
+
+	ftm_quad_decode_mode_t quadMode = kFTM_QuadPhaseEncode;
+	FTM_SetupQuadDecode(FTM2,&paramsPhase,&paramsPhase,quadMode);
+	//FTM2->MODE |= FTM_MODE_WPDIS_MASK;
+	uint32_t startVal = 0;
+	uint32_t overVal = 255;
+	FTM_SetQuadDecoderModuloValue(FTM2, startVal, overVal);
+	FTM_ClearQuadDecoderCounterValue(FTM2);
+
 	GPIO_PinInit(GPIOA,4, &config);
 	GPIO_PinInit(GPIOC,6, &config);
 
@@ -32,12 +50,34 @@ void InputHandlerInit(int* pl)
 	GPIO_PinInit(ENTER_GPIO, &config);     //Enter
 	GPIO_PinInit(B_GPIO, &config);		//B
 }
-static int lastEnc=0b11,newEnc,storeEnc,cnt=0;;
+static int lastEnc=0b11,newEnc,storeEnc=0b11,cnt=0;
 static lv_indev_state_t encKey=LV_GROUP_KEY_ESC;
 static int lastEncCnt=0;
+#define ENC_LEFT 0b010010
+#define ENC_RIGHT 0b100001
 void InputUpdate()
 {
-	newEnc=(GPIO_PinRead(A_GPIO)<<1) | GPIO_PinRead(B_GPIO);
+	newEnc=FTM_GetQuadDecoderCounterValue(FTM2);
+	if(newEnc!=lastEnc)
+	{
+		if(lastEnc > 128)
+		{
+			if( (newEnc > (lastEnc-128)) && newEnc<lastEnc)
+				storeEnc=ENC_LEFT;
+			else
+				storeEnc=ENC_RIGHT;
+		}
+		else
+		{
+			if( (newEnc < (lastEnc+128)) && newEnc>lastEnc)
+				storeEnc=ENC_RIGHT;
+			else
+				storeEnc=ENC_LEFT;
+		}
+		lastEnc = newEnc;
+	}
+
+	/*newEnc=(GPIO_PinRead(A_GPIO)<<1) | GPIO_PinRead(B_GPIO);
 	if(lastEnc!=newEnc && storeEnc!=0b010010 && storeEnc!=0b100001)
 	{
 		if(lastEncCnt>=4)
@@ -50,14 +90,12 @@ void InputUpdate()
 			lastEncCnt++;
 	}
 	else
-		lastEncCnt=0;
-	//lastEnc=newEnc;
+		lastEncCnt=0;*/
 
 }
 static int playPressed=0;
 bool InputHandlerRead(lv_indev_data_t * data)
 {
-	newEnc=(GPIO_PinRead(GPIOC,9)<<1) | GPIO_PinRead(GPIOC,8);
 	if(GPIO_PinRead(BACKWARD_GPIO)==0)
 	{
 		data->key = LV_GROUP_KEY_PREV;
@@ -96,7 +134,7 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		state=LV_INDEV_STATE_PR;
 		cnt++;
 	}
-	else if(storeEnc==0b100001 &&cnt==0)
+	else if(storeEnc==0b100001 && cnt==0)
 	{
 		data->key=LV_GROUP_KEY_RIGHT;
 		encKey=LV_GROUP_KEY_RIGHT;

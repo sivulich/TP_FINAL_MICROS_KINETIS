@@ -23,7 +23,7 @@
 #define EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER kDSPI_MasterPcs0
 #define EXAMPLE_DSPI_DEALY_COUNT 0xfffffU
 #define TRANSFER_SIZE  (240*320*3)         /* Transfer dataSize */
-#define TRANSFER_BAUDRATE 50000000U /* Transfer baudrate - 50M */
+#define TRANSFER_BAUDRATE 10000000U /* Transfer baudrate - 50M */
 
 /*******************************************************************************
  * Prototypes
@@ -132,7 +132,8 @@ void SPI_Handler_Init()
 
 
 	EDMA_GetDefaultConfig(&userConfig);
-
+	userConfig.enableRoundRobinArbitration=true;
+	userConfig.enableDebugMode = true;
 	EDMA_Init(EXAMPLE_DSPI_MASTER_DMA_BASEADDR, &userConfig);
 	/*edma_channel_Preemption_config_t priorityConfig;
 	priorityConfig.channelPriority=1;

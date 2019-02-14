@@ -26,7 +26,7 @@
 
 
 static int init();
-static int setupSignal(short* buf1,short* buf2,unsigned len,unsigned fre);
+static int setupSignal(short** bu,int qnt,unsigned len,unsigned fre);
 static int start();
 /*If returns 1, you should fill buff1, if it returns 2 you should fill buf2, if it returns 0 everthing is OK!*/
 static int status();
@@ -34,8 +34,8 @@ static int pause();
 static int stop();
 
 
-static int setUp=0,pauseState=0;
-static short* buffs[2];
+static int setUp=0,pauseState=0,buffQnt;
+static short** buffs;
 static volatile unsigned buffLen,freq,currPos,currBuff;
 static volatile int informed=0,setDac=0;
 
@@ -59,7 +59,7 @@ void EDMA_Callback(edma_handle_t *handle, void *param, bool transferDone, uint32
         g_Transfer_Done = true;
         if(pauseState==0)
         {
-        	currBuff=(currBuff+1)%2;
+        	currBuff=(currBuff+1)%buffQnt;
         	informed=0;
         	EDMA_PrepareTransfer(&transferConfig, buffs[currBuff], 2, DAC0->DAT, 2,
         									 2, buffLen*2, kEDMA_MemoryToPeripheral);
@@ -105,6 +105,7 @@ static int init()
 	 * userConfig.enableDebugMode = false;
 	 */
 	EDMA_GetDefaultConfig(&userConfig);
+	userConfig.enableRoundRobinArbitration=true;
 	userConfig.enableDebugMode = true;
 	EDMA_Init(EXAMPLE_DMA, &userConfig);
 	EDMA_CreateHandle(&g_EDMA_Handle, EXAMPLE_DMA, CHANNEL_DMA);
@@ -118,13 +119,13 @@ static int init()
 }
 
 
-static int setupSignal(short* buf1,short* buf2,unsigned len,unsigned fre)
+static int setupSignal(short** bu,int qnt,unsigned len,unsigned fre)
 {
 	if(setUp==0)
 	{
-		buffs[0]=buf1;
-		buffs[1]=buf2;
+		buffs=bu;
 		buffLen=len;
+		buffQnt=qnt;
 		freq=fre;
 		//SETUP PIT
 		setUp=1;
@@ -197,10 +198,7 @@ static int status()
 	if(informed==0)
 	{
 		informed=1;
-		if(currBuff==0)
-			return 2;
-		else
-			return 1;
+		return ((currBuff-1+buffQnt)%buffQnt)+1;
 	}
 	return 0;
 }

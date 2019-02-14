@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 #define MAX_FILE_NAME 	256
-#define MAX_FILES		256
+#define MAX_FILES		32
 
 typedef char (*currarr)[MAX_FILE_NAME+1];
 
