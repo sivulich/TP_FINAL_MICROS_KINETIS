@@ -26,7 +26,7 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-
+#define PING_PONG_BUFFS 10
 /* buffer size (in byte) for read/write operations */
 #define BUFFER_SIZE (100U)
 /*******************************************************************************
@@ -36,8 +36,12 @@
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-
-
+static int play=1;
+static unsigned buffLen;
+static short buff[MP3_BUFFER_SIZE*PING_PONG_BUFFS/2];
+static short* outBuff[PING_PONG_BUFFS];
+static int len=0,dur=0,lastStatus;
+static long long pos=0;
 
 //Drivers for input and display
 static lv_indev_drv_t kb_drv;
@@ -90,6 +94,7 @@ static float volumeMap[] = {	0.00398107170553497,
 						1.99526231496888};
 
 /*******************************************************************************/
+
 int main(void)
 {
 
@@ -102,13 +107,10 @@ int main(void)
 
 	ili9431_init();
 
-	int play=1;
-	unsigned buffLen;
-	short buff[MP3_BUFFER_SIZE*4];
-	short* outBuff[8]={buff,buff+MP3_BUFFER_SIZE/2,buff+MP3_BUFFER_SIZE,buff+MP3_BUFFER_SIZE*3/2,
-					   buff+MP3_BUFFER_SIZE*2,buff+MP3_BUFFER_SIZE*5/2,buff+MP3_BUFFER_SIZE*3,buff+MP3_BUFFER_SIZE*7/2};
-	int len=0,dur=0,lastStatus;
-	long long pos=0;
+
+	for(int i=0;i<PING_PONG_BUFFS;i++)
+		outBuff[i]=buff+i*MP3_BUFFER_SIZE/2;
+
 
 	lv_disp_drv_init(&disp);
 	disp.disp_flush = ili9431_flush;
@@ -142,26 +144,19 @@ int main(void)
 				dur =0;
 				while(dur<=0)
 					dur=MP3DEC.decode(outBuff[0],&buffLen);
-				memset(buff,2048,MP3_BUFFER_SIZE);
 				MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1);
 				while(len<=0)
 					len=MP3DEC.decode(outBuff[0],&buffLen);
 				MP3FrameInfo finfo=MP3DEC.getFrameInfo();
 
 				SigGen.stop();
-				SigGen.setupSignal(outBuff,8,finfo.outputSamps,finfo.samprate*finfo.nChans);
+				SigGen.setupSignal(outBuff,PING_PONG_BUFFS,finfo.outputSamps,finfo.samprate*finfo.nChans);
 				SigGen.start();
 				len=0;
 				pos=0;
 				play=1;
-				len+=MP3DEC.decode(outBuff[0],&buffLen);
-				len+=MP3DEC.decode(outBuff[1],&buffLen);
-				len+=MP3DEC.decode(outBuff[2],&buffLen);
-				len+=MP3DEC.decode(outBuff[3],&buffLen);
-				len+=MP3DEC.decode(outBuff[4],&buffLen);
-				len+=MP3DEC.decode(outBuff[5],&buffLen);
-				len+=MP3DEC.decode(outBuff[6],&buffLen);
-				len+=MP3DEC.decode(outBuff[7],&buffLen);
+				for(int i=0;i<PING_PONG_BUFFS;i++)
+					len+=MP3DEC.decode(outBuff[i],&buffLen);
 				lastStatus=1;
 			}
 			if(play==1 && MP3DEC.onFile()==1)
@@ -173,13 +168,13 @@ int main(void)
 					int currBuff = status-1;
 					int circ=lastStatus-1;
 					if(currBuff<circ)
-						currBuff+=8;
+						currBuff+=PING_PONG_BUFFS;
 					while(circ<currBuff)
 					{
 						circ++;
-						int ret = MP3DEC.decode(outBuff[circ%8],&buffLen);
+						int ret = MP3DEC.decode(outBuff[circ%PING_PONG_BUFFS],&buffLen);
 						for(int i=0;i<buffLen;i++)
-							outBuff[circ%8][i]=(((((int)outBuff[circ%8][i] + 32768))>>4))/2;
+							outBuff[circ%PING_PONG_BUFFS][i]=(((((int)outBuff[circ%PING_PONG_BUFFS][i] + 32768))>>4))/2;
 						len+=ret;
 						if(ret>0 && len>1000)
 						{
@@ -213,7 +208,6 @@ int main(void)
 		{
 			SigGen.stop();
 		}
-		InputUpdate();
 		lv_task_handler();
 	}
 
