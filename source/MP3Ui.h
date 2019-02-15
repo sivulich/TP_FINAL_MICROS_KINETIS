@@ -25,7 +25,7 @@ extern "C" {
 	/**********************
 	*      TYPEDEFS
 	**********************/
-
+	typedef enum{MAIN_SCREEN=0,PLAY_SCREEN,EQ_SCREEN,FILE_SCREEN0,FILE_SCREEN1,SETTING_SCREEN,SCREENS} screenEnum;
 	/**********************
 	* GLOBAL PROTOTYPES
 	**********************/
@@ -38,6 +38,8 @@ extern "C" {
 	char* getMP3file();
 
 	void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first);
+
+	int MP3UiGetCurrentScreen();
 	/**********************
 	*      MACROS
 	**********************/

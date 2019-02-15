@@ -33,10 +33,14 @@ static lv_indev_drv_t* kb_drv;
 static lv_indev_t* kb_indev;
 
 /*Groups*/
-enum{MAIN_SCREEN=0,PLAY_SCREEN,EQ_SCREEN,FILE_SCREEN0,FILE_SCREEN1,SETTING_SCREEN,SCREENS}screenEnum;
+
 static lv_group_t * groups[SCREENS];
+static int currentScreen=MAIN_SCREEN;
 
-
+int MP3UiGetCurrentScreen()
+{
+	return currentScreen;
+}
 
 static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 {
@@ -59,6 +63,7 @@ static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 			}
 		}
 			
+	currentScreen=p;
 }
 
 

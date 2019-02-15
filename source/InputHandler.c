@@ -3,6 +3,7 @@
 #include "fsl_ftm.h"
 #include "../lv_conf.h"
 #include <math.h>
+#include "MP3Ui.h"
 
 #define FORWARD_GPIO GPIOC,5
 #define BACKWARD_GPIO GPIOC,0
@@ -14,11 +15,13 @@
 
 
 static lv_indev_state_t state;
-static int* play;
-void InputHandlerInit(int* pl)
+static int* play,*currentScreen,*volume;
+void InputHandlerInit(int* pl,int* cs,int* vol)
 {
 	//Initialize non-SPI GPIOs
 	play=pl;
+	currentScreen=cs;
+	volume=vol;
 	gpio_pin_config_t config = {
 	     kGPIO_DigitalInput,
 	 	 0
@@ -117,15 +120,39 @@ bool InputHandlerRead(lv_indev_data_t * data)
 	}
 	else if(storeEnc==0b010010 && cnt==0)
 	{
-		data->key = LV_GROUP_KEY_LEFT;
-		encKey=LV_GROUP_KEY_LEFT;
+		if(*currentScreen==PLAY_SCREEN)
+		{
+			storeEnc=0b111111;
+			if((*volume)>0)
+				*volume=*volume-1;
+			data->key=LV_GROUP_KEY_ESC;
+			data->state=LV_INDEV_STATE_REL;
+			return false;
+		}
+		else if(*currentScreen==MAIN_SCREEN)
+			data->key=LV_GROUP_KEY_PREV;
+		else
+			data->key = LV_GROUP_KEY_LEFT;
+		encKey=data->key;
 		state=LV_INDEV_STATE_PR;
 		cnt++;
 	}
 	else if(storeEnc==0b100001 && cnt==0)
 	{
-		data->key=LV_GROUP_KEY_RIGHT;
-		encKey=LV_GROUP_KEY_RIGHT;
+		if(*currentScreen==PLAY_SCREEN)
+		{
+			storeEnc=0b111111;
+			if((*volume)<29)
+				*volume=*volume+1;
+			data->key=LV_GROUP_KEY_ESC;
+			data->state=LV_INDEV_STATE_REL;
+			return false;
+		}
+		else if(*currentScreen==MAIN_SCREEN)
+			data->key=LV_GROUP_KEY_NEXT;
+		else
+			data->key = LV_GROUP_KEY_RIGHT;
+		encKey=data->key;
 		state=LV_INDEV_STATE_PR;
 		cnt++;
 	}

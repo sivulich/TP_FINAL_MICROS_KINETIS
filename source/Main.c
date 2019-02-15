@@ -26,7 +26,7 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define PING_PONG_BUFFS 10
+#define PING_PONG_BUFFS 14
 /* buffer size (in byte) for read/write operations */
 #define BUFFER_SIZE (100U)
 /*******************************************************************************
@@ -36,7 +36,7 @@
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-static int play=1;
+static int play=1,currentScreen=MAIN_SCREEN;
 static unsigned buffLen;
 static short buff[MP3_BUFFER_SIZE*PING_PONG_BUFFS/2];
 static short* outBuff[PING_PONG_BUFFS];
@@ -62,36 +62,36 @@ int checkMP3file(char* fn, unsigned sz)
 
 /*Volume MAP*/
 static int volume=20;
-static float volumeMap[] = {	0.00398107170553497,
-						0.00493291291186596,
-						0.00611233145140850,
-						0.00757373917589501,
-						0.00938455735924933,
-						0.0116283271424690,
-						0.0144085636600656,
-						0.0178535316561522,
-						0.0221221629107045,
-						0.0274113884733337,
-						0.0339652239733048,
-						0.0420860271517816,
-						0.0521484469766079,
-						0.0646167078746697,
-						0.0800660264807754,
-						0.0992091489534587,
-						0.122929233142759,
-						0.152320592611433,
-						0.188739182213510,
-						0.233865154355699,
-						0.289780371941764,
-						0.359064454018608,
-						0.444913785139290,
-						0.551288978877067,
-						0.683097598641883,
-						0.846420565527684,
-						1.04879269839711,
-						1.29955032877224,
-						1.61026202756094,
-						1.99526231496888};
+static int volumeMap[] = {	0,
+							1,
+							2,
+							2,
+							3,
+							4,
+							6,
+							7,
+							10,
+							13,
+							18,
+							23,
+							31,
+							42,
+							55,
+							74,
+							98,
+							131,
+							175,
+							233,
+							310,
+							413,
+							550,
+							733,
+							976,
+							1300,
+							1732,
+							2308,
+							3075,
+							4096};
 
 /*******************************************************************************/
 
@@ -118,7 +118,7 @@ int main(void)
 	disp.disp_map = ili9431_map;
 	lv_disp_drv_register(&disp);
 
-	InputHandlerInit(&play);
+	InputHandlerInit(&play,&currentScreen,&volume);
 	kb_drv.type = LV_INDEV_TYPE_KEYPAD;
 	kb_drv.read = InputHandlerRead;
 	kb_indev = lv_indev_drv_register(&kb_drv);
@@ -174,7 +174,12 @@ int main(void)
 						circ++;
 						int ret = MP3DEC.decode(outBuff[circ%PING_PONG_BUFFS],&buffLen);
 						for(int i=0;i<buffLen;i++)
-							outBuff[circ%PING_PONG_BUFFS][i]=(((((int)outBuff[circ%PING_PONG_BUFFS][i] + 32768))>>4))/2;
+						{
+							unsigned temp=(((((int)outBuff[circ%PING_PONG_BUFFS][i] + 32768))>>4))/2;
+							temp*=volumeMap[volume];
+							temp>>=12;
+							outBuff[circ%PING_PONG_BUFFS][i]=temp;
+						}
 						len+=ret;
 						if(ret>0 && len>1000)
 						{
@@ -209,6 +214,7 @@ int main(void)
 			SigGen.stop();
 		}
 		lv_task_handler();
+		currentScreen=MP3UiGetCurrentScreen();
 	}
 
 	printf("Thanks for using MP3\n");
