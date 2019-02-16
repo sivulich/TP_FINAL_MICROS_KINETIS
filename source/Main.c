@@ -26,7 +26,7 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define PING_PONG_BUFFS 14
+#define PING_PONG_BUFFS 10
 /* buffer size (in byte) for read/write operations */
 #define BUFFER_SIZE (100U)
 /*******************************************************************************
@@ -61,36 +61,36 @@ int checkMP3file(char* fn, unsigned sz)
 
 
 /*Volume MAP*/
-static int volume=20;
+static int volume=29;
 static int volumeMap[] = {	0,
-							1,
-							2,
-							2,
-							3,
-							4,
-							6,
-							7,
-							10,
-							13,
-							18,
-							23,
-							31,
-							42,
-							55,
-							74,
-							98,
-							131,
-							175,
-							233,
-							310,
-							413,
-							550,
-							733,
-							976,
-							1300,
-							1732,
-							2308,
-							3075,
+							141,
+							282,
+							424,
+							565,
+							706,
+							847,
+							989,
+							1130,
+							1271,
+							1412,
+							1554,
+							1695,
+							1836,
+							1977,
+							2119,
+							2260,
+							2401,
+							2542,
+							2684,
+							2825,
+							2966,
+							3107,
+							3249,
+							3390,
+							3531,
+							3672,
+							3814,
+							3955,
 							4096};
 
 /*******************************************************************************/
@@ -98,66 +98,89 @@ static int volumeMap[] = {	0,
 int main(void)
 {
 
+	/*Inicialización de la placa*/
     BOARD_InitPins();
     BOARD_BootClockRUN();
     BOARD_InitDebugConsole();
 
-	/*Initialize LittlevGL*/
+	/*inicialización de littlevgl*/
 	lv_init();
 
+	/*Inicialización de la pantalla*/
 	ili9431_init();
-
-
-	for(int i=0;i<PING_PONG_BUFFS;i++)
-		outBuff[i]=buff+i*MP3_BUFFER_SIZE/2;
-
-
+	//Registramos la pantalla como output
 	lv_disp_drv_init(&disp);
 	disp.disp_flush = ili9431_flush;
 	//disp.disp_fill = ili9431_fill;
 	disp.disp_map = ili9431_map;
 	lv_disp_drv_register(&disp);
 
+	/*Inicialización de los inputs*/
 	InputHandlerInit(&play,&currentScreen,&volume);
+	//Registramos los inputs como un keypad
 	kb_drv.type = LV_INDEV_TYPE_KEYPAD;
 	kb_drv.read = InputHandlerRead;
 	kb_indev = lv_indev_drv_register(&kb_drv);
 
 
+	/*Inicializamos los ping pong buffers*/
+	for(int i=0;i<PING_PONG_BUFFS;i++)
+		outBuff[i]=buff+i*MP3_BUFFER_SIZE/2;
+
+	/*Creamos la interfaz de usuario*/
 	MP3UiCreate(&kb_drv);
+
+	/*Inicializamos el decodificador MP3 y el generador de señales*/
 	MP3DEC.init();
 	SigGen.init();
 
-
-
+	/*Main loop del programa*/
 	while (1) {
-		/* Periodically call the lv_task handler.
-		* It could be done in a timer interrupt or an OS task too.*/
 
+		//Si se selecciono un archivo nos devolvera el nombre, si no hay SD -1 y si no se selecciono nada 0
 		char* file = getMP3file();
 		if(file!=(char*)-1)
 		{
+			//Si se selecciono un archivo
 			if(file!=NULL)
 			{
+				//Reiniciamos el decodificador MP3
 				MP3DEC.unloadFile();
 				MP3DEC.loadFile(file);
+
+				//Obtenemos el header extraemos la información y lo salteamos
 				dur =0;
 				while(dur<=0)
 					dur=MP3DEC.decode(outBuff[0],&buffLen);
-				MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1);
+				MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1,volume);
 				while(len<=0)
 					len=MP3DEC.decode(outBuff[0],&buffLen);
 				MP3FrameInfo finfo=MP3DEC.getFrameInfo();
 
+				//Reinicamos el generador de señales y lo configuramos para esta canción
 				SigGen.stop();
 				SigGen.setupSignal(outBuff,PING_PONG_BUFFS,finfo.outputSamps,finfo.samprate*finfo.nChans);
-				SigGen.start();
 				len=0;
 				pos=0;
 				play=1;
-				for(int i=0;i<PING_PONG_BUFFS;i++)
-					len+=MP3DEC.decode(outBuff[i],&buffLen);
 				lastStatus=1;
+
+				//Preparamos los ping pong buffers
+				for(int i=0;i<PING_PONG_BUFFS;i++)
+				{
+					len+=MP3DEC.decode(outBuff[i],&buffLen);
+					for(int j=0;j<buffLen;j++)
+					{
+						unsigned temp=(((((int)outBuff[i][j] + 32768))>>4));
+						temp*=volumeMap[volume];
+						temp>>=12;
+						outBuff[i][j]=temp;
+					}
+				}
+
+
+				//Arrancamos la señal
+				SigGen.start();
 			}
 			if(play==1 && MP3DEC.onFile()==1)
 			{
@@ -181,10 +204,10 @@ int main(void)
 							outBuff[circ%PING_PONG_BUFFS][i]=temp;
 						}
 						len+=ret;
-						if(ret>0 && len>1000)
+						if(ret>0 && len>200)
 						{
 							pos+=len;
-							MP3UiSetSongInfo(NULL,NULL,pos/1000,0);
+							MP3UiSetSongInfo(NULL,NULL,pos/1000,0,volume);
 							len=0;
 						}
 						else if(ret<0)
@@ -192,7 +215,7 @@ int main(void)
 						else if(ret  == 0)
 						{
 							PRINTF("Finished Decoding File!\n");
-							MP3UiSetSongInfo(NULL,NULL,dur/1000,0);
+							MP3UiSetSongInfo(NULL,NULL,dur/1000,0,volume);
 							MP3DEC.unloadFile();
 							SigGen.stop();
 							break;

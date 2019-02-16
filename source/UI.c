@@ -111,6 +111,11 @@ extern "C" {
 		i=0;
 		if(ini==1)
 		{
+			strncpy(current[cnt++], "..",MAX_FILE_NAME);
+			if(len>1)
+				current[cnt-1][MAX_FILE_NAME]=2;
+			else
+				current[cnt-1][MAX_FILE_NAME]=3;
 			while (f_readdir(&dr,&de) == FR_OK && de.fname[0]!=0 && cnt < MAX_FILES-1)
 			{
 				if((de.fattrib & AM_HID) == 0 && (de.fattrib & AM_SYS) == 0)
@@ -123,14 +128,15 @@ extern "C" {
 
 			}
 
-			strncpy(current[cnt++], "..",MAX_FILE_NAME);
+
 		}
 		else
 		{
 			if(ini==2)
 			{
 				cnt=1;
-				strncpy(current[0], "Please Insert SD card",MAX_FILE_NAME);
+				strncpy(current[0], "Please Insert SD card. Press to Exit",MAX_FILE_NAME);
+				current[0][MAX_FILE_NAME]=4;
 			}
 		}
 
@@ -197,9 +203,11 @@ extern "C" {
 			else if (cmd == 'e')
 			{
 
-				if(cnt-1==i)
+				if(0==i)
 				{
 
+					if(len==1)
+						return 1;
 					delLastDir();
 					f_opendir(&dr,file);
 
@@ -237,6 +245,8 @@ extern "C" {
 				return 0;
 			}
 		}
+		else if(ini==2)
+			return 1;
 
 		return cmd;
 	};
