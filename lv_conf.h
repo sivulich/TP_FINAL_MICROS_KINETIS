@@ -239,7 +239,7 @@
 #define USE_LV_GAUGE    0
 
 /*Chart (dependencies: -)*/
-#define USE_LV_CHART    0
+#define USE_LV_CHART    1
 
 /*LED (dependencies: -)*/
 #define USE_LV_LED      0

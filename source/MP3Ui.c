@@ -21,7 +21,8 @@ static lv_obj_t * bassRoller, *midRoller, *trebbleRoller, *eqBackBtn;
 
 /*PlayScreen Info*/
 static unsigned duration,currentTime;
-static lv_obj_t* progressBar,*playBackBtn,*songNameLbl,*artistNameLbl,*volumeLabel;
+static lv_obj_t* progressBar,*playBackBtn,*songNameLbl,*artistNameLbl,*volumeLabel,*eqGraph;
+lv_chart_series_t * ser1;
 
 /*Button styles*/
 static lv_style_t style_bg,style_bgg;
@@ -399,12 +400,17 @@ static void PlayScreenCreate(void)
 	lv_label_set_text(volumeLabel,SYMBOL_VOLUME_MAX" 30");
 	lv_obj_align(volumeLabel, NULL, LV_ALIGN_IN_TOP_RIGHT, -20, 0);
 
-
+	eqGraph = lv_chart_create(playScreen, NULL);
+	lv_obj_align(eqGraph, NULL, LV_ALIGN_CENTER, 0, 0);
+	ser1 = lv_chart_add_series(eqGraph, LV_COLOR_RED);
+	lv_chart_set_series_width(eqGraph, 20);
+	lv_chart_set_point_count(eqGraph, 8);
+	lv_chart_set_type(eqGraph, LV_CHART_TYPE_COLUMN);
 	playBackBtn=BackButtonCreate(playScreen, retMainScreen);
 
 }
 
-void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,int volume)
+void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,int volume,float* eqPoints)
 {
 	if (first == 1)
 	{
@@ -426,6 +432,16 @@ void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,in
 	{
 		currentTime = dur;
 		lv_bar_set_value(progressBar, currentTime);
+		ser1->points[0] = eqPoints[0];
+		ser1->points[1] = eqPoints[1];
+		ser1->points[2] = eqPoints[2];
+		ser1->points[3] = eqPoints[3];
+		ser1->points[4] = eqPoints[4];
+		ser1->points[5] = eqPoints[5];
+		ser1->points[6] = eqPoints[6];
+		ser1->points[7] = eqPoints[7];
+
+		lv_chart_refresh(eqGraph);
 	}
 	if(volume == 0)
 	{

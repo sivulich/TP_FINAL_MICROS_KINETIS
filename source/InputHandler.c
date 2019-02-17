@@ -142,7 +142,7 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		if(*currentScreen==PLAY_SCREEN)
 		{
 			storeEnc=0b111111;
-			if((*volume)<29)
+			if((*volume)<30)
 				*volume=*volume+1;
 			data->key=LV_GROUP_KEY_ESC;
 			data->state=LV_INDEV_STATE_REL;

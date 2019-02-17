@@ -71,15 +71,6 @@ void EDMA_Callback(edma_handle_t *handle, void *param, bool transferDone, uint32
 
 static int init()
 {
-	/*vref_config_t vrefConfig;
-	VREF_GetDefaultConfig(&vrefConfig);
-	// Initialize the VREF mode.
-	VREF_Init(VREF, &vrefConfig);
-	uint8_t val = VREF_GetTrimVal(VREF);
-	VREF_SetTrimVal(VREF, 0x3F/1000);
-	val = VREF_GetTrimVal(VREF);
-	VREF_SetTrimVal(VREF, 0x3F);*/
-
 	dac_config_t dacConfigStruct;
 	DAC_GetDefaultConfig(&dacConfigStruct);
 	//dacConfigStruct.referenceVoltageSource=kDAC_ReferenceVoltageSourceVref1;

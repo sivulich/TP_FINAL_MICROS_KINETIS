@@ -223,7 +223,7 @@ extern "C" {
 					PRINTF("Current is: %s\n",current[i]);
 					if (res == FR_OK && (info.fattrib&AM_DIR) )
 					{
-						f_opendir(&tmp,current[i]);
+						f_opendir(&tmp,file);
 						cnt = 0;
 						i = 0;
 						dr = tmp;
@@ -305,7 +305,7 @@ extern "C" {
 	}
 	void setPos(int p)
 	{
-		if(i>=0 && i<cnt)
+		if(p>=0 && p<cnt)
 			i = p;
 	}
 	UI_ UI = { .init = init,.input = input,.getFile = getFile,.getPath=getPath,.getCurrent = getCurrent,.close = close,.exitFile=exitFile , .setPos=setPos};

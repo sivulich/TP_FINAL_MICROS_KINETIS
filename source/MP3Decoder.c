@@ -20,8 +20,8 @@ static int loadedFile=0;
 
 //Decode info
 static unsigned char *temp,mp3file[MP3_BUFFER_SIZE],id3v1Tit[256],id3v1Artist[256];
-static int sz, frames = 0, skipped = 0,lastPos=MP3_BUFFER_SIZE,bufSize=MP3_BUFFER_SIZE;
-static long long duration;
+static int  frames = 0, skipped = 0,lastPos=MP3_BUFFER_SIZE,bufSize=MP3_BUFFER_SIZE;
+static long long sz,duration;
 static UINT br;
 static int headerSize;
 
@@ -89,25 +89,24 @@ unsigned char* getMP3Info(const char* tag,int* size)
 		if(strcmp("TIT2",tag)==0)
 		{
 			read_ID3_info	(
-											 TITLE_ID3,
-											 id3v1Tit,
-											 256,
-											 &fp
-									 );
+							 TITLE_ID3,
+							 id3v1Tit,
+							 256,
+							 &fp
+							 );
 			return id3v1Tit;
 		}
 		else if(strcmp("TPE1",tag)==0)
 		{
 			read_ID3_info	(
-														 ARTIST_ID3,
-														 id3v1Artist,
-														 256,
-														 &fp
-												 );
-						return id3v1Artist;
+							 ARTIST_ID3,
+							 id3v1Artist,
+							 256,
+							 &fp
+						 	 );
+			return id3v1Artist;
 		}
 	}
-
 
 }
 
@@ -160,6 +159,12 @@ static long long decode(short * out,unsigned* len)
 		}
 		else if (code ==-1)
 			return MP3DEC.decode(out,len);
+		else if(code == -6)
+		{
+			lastPos=MP3_BUFFER_SIZE;
+			sz-=lastPos;
+			return MP3DEC.decode(out,len);
+		}
 		else
 			return code;
 	}

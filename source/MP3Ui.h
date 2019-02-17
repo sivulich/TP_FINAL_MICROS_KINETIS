@@ -37,7 +37,7 @@ extern "C" {
 
 	char* getMP3file();
 
-	void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,int volume);
+	void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,int volume,float* eqPoints);
 
 	int MP3UiGetCurrentScreen();
 	/**********************
