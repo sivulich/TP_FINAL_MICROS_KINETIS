@@ -116,7 +116,7 @@ extern "C" {
 				current[cnt-1][MAX_FILE_NAME]=2;
 			else
 				current[cnt-1][MAX_FILE_NAME]=3;
-			while (f_readdir(&dr,&de) == FR_OK && de.fname[0]!=0 && cnt < MAX_FILES-1)
+			while (f_readdir(&dr,&de) == FR_OK && de.fname[0]!=0 && cnt < MAX_FILES-2)
 			{
 				if((de.fattrib & AM_HID) == 0 && (de.fattrib & AM_SYS) == 0)
 				{
@@ -126,6 +126,11 @@ extern "C" {
 					//PRINTF("Found a dir: %d with name: %s",de.fattrib&AM_DIR,current[cnt-1]);
 				}
 
+			}
+			if(cnt==MAX_FILES-2)
+			{
+				strncpy(current[cnt++], "More",MAX_FILE_NAME);
+				current[cnt-1][MAX_FILE_NAME]=5;
 			}
 
 
@@ -213,6 +218,8 @@ extern "C" {
 
 					updateCurrent();
 				}
+				else if(current[i][MAX_FILE_NAME]==5)
+					updateCurrent();
 				else
 				{
 					FILINFO info;

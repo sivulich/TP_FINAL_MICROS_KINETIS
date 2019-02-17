@@ -69,13 +69,15 @@ static int volumeMap[] = {	0,
 /*******************************************************************************
  * Functions
  ******************************************************************************/
-static int init();
-static void update(int play, int volume);
+static int init(int* p,int* v);
+static void update();
 static arm_rfft_instance_f32 rfft_inst;
 static arm_cfft_radix4_instance_f32 cfft_inst;
-
-static int init()
+static int * pl,*vol;
+static int init(int* p,int* v)
 {
+	pl=p;
+	vol=v;
 	/*Inicializamos los ping pong buffers*/
 	for(int i=0;i<PING_PONG_BUFFS;i++)
 		outBuff[i]=buff+i*MP3_BUFFER_SIZE/2;
@@ -87,9 +89,13 @@ static int init()
 	arm_rfft_init_f32(&rfft_inst, &cfft_inst, FFT_LENGTH, 0, 1);
 	return 0;
 }
+float eqPoints[2][8]={{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0}};
+int currEqualizer=0;
 
-static void update(int play, int volume)
+static void update()
 {
+	int play=*pl;
+	int volume=*vol;
 	//Si se selecciono un archivo nos devolvera el nombre, si no hay SD -1 y si no se selecciono nada 0
 	char* file = getMP3file();
 	if(file!=(char*)-1)
@@ -155,7 +161,7 @@ static void update(int play, int volume)
 					{
 						if(len>100 && i%2==0)
 						{
-							input[i/2]=(outBuff[circ%PING_PONG_BUFFS][i]/2+outBuff[circ%PING_PONG_BUFFS][i+1]/2);
+							input[i/2]=(outBuff[circ%PING_PONG_BUFFS][i]/2+outBuff[circ%PING_PONG_BUFFS][i+1]/2)*1.0/32768;
 						}
 						unsigned temp=(((((int)outBuff[circ%PING_PONG_BUFFS][i] + 32768))>>4))/2;
 						temp*=volumeMap[volume];
@@ -165,17 +171,31 @@ static void update(int play, int volume)
 
 
 
-					if(ret>0 && len>100)
+					if(ret>0 && len>130)
 					{
 						pos+=len;
 						arm_rfft_f32(&rfft_inst, input, output);
 						arm_cmplx_mag_f32(output, input, FFT_LENGTH);
-						float eqPoints[8]={0,0,0,0,0,0,0,0};
-						for(int i=0;i<512;i++)
-						{
-							eqPoints[i/64]=((float)input[i]+input[1023-i])*5/128000;
-						}
-						MP3UiSetSongInfo(NULL,NULL,pos/1000,0,volume,eqPoints);
+						for(int i=0;i<8;i++)
+							eqPoints[currEqualizer][i]=0;
+						for(int i=0;i<2;i++)
+							eqPoints[currEqualizer][0]+=(float)input[i]*2.0/2;
+						for(int i=2;i<5;i++)
+							eqPoints[currEqualizer][1]+=(float)input[i]*8.0/3;
+						for(int i=5;i<10;i++)
+							eqPoints[currEqualizer][2]+=(float)input[i]*8.0/5;
+						for(int i=10;i<23;i++)
+							eqPoints[currEqualizer][3]+=(float)input[i]*8.0/13;
+						for(int i=23;i<49;i++)
+							eqPoints[currEqualizer][4]+=(float)input[i]*8.0/26;
+						for(int i=49;i<108;i++)
+							eqPoints[currEqualizer][5]+=(float)input[i]*8.0/61;
+						for(int i=108;i<235;i++)
+							eqPoints[currEqualizer][6]+=(float)input[i]*8.0/127;
+						for(int i=235;i<512;i++)
+							eqPoints[currEqualizer][7]+=(float)input[i]*8.0/277;
+						currEqualizer=(currEqualizer+1)%2;
+						MP3UiSetSongInfo(NULL,NULL,pos/1000,0,volume,eqPoints[currEqualizer]);
 						len=0;
 					}
 					else if(ret<0)

@@ -68,12 +68,12 @@ int main(void)
 	MP3UiCreate(&kb_drv);
 
 	/*Creamos el reproductor*/
-	MP3Player.init();
+	MP3Player.init(&play,&volume);
 
 	/*Main loop del programa*/
 	while (1)
 	{
-		MP3Player.update(play,volume);
+		MP3Player.update();
 		lv_task_handler();
 		currentScreen=MP3UiGetCurrentScreen();
 	}

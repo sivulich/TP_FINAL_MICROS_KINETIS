@@ -159,14 +159,13 @@ static long long decode(short * out,unsigned* len)
 		}
 		else if (code ==-1)
 			return MP3DEC.decode(out,len);
-		else if(code == -6)
+		else //if(code == -6)
 		{
 			lastPos=MP3_BUFFER_SIZE;
 			sz-=lastPos;
 			return MP3DEC.decode(out,len);
 		}
-		else
-			return code;
+
 	}
 	else
 		return 0;
