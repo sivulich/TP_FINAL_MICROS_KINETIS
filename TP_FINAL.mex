@@ -148,6 +148,7 @@
                   <pin peripheral="GPIOC" signal="GPIO, 1" pin_num="71" pin_signal="ADC0_SE15/PTC1/LLWU_P6/SPI0_PCS3/UART1_RTS_b/FTM0_CH0/FB_AD13/I2S0_TXD0"/>
                   <pin peripheral="FTM2" signal="QD_PH, A" pin_num="64" pin_signal="PTB18/CAN0_TX/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA"/>
                   <pin peripheral="FTM2" signal="QD_PH, B" pin_num="65" pin_signal="PTB19/CAN0_RX/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB"/>
+                  <pin peripheral="SPI0" signal="PCS5_PCSS" pin_num="69" pin_signal="PTB23/SPI2_SIN/SPI0_PCS5/FB_AD28"/>
                </pins>
             </function>
          </functions_list>

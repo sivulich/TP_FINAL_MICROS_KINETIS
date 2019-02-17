@@ -11,9 +11,9 @@ extern volatile unsigned spiFlush;
 
 void SPI_Handler_Init();
 
-void SPI_Write_DMA(uint8_t* data , unsigned len);
+void SPI_Write_DMA(uint8_t* data , unsigned len,unsigned cs);
 
-void SPI_Write_Blocking(uint8_t* data , unsigned len);
+void SPI_Write_Blocking(uint8_t* data , unsigned len,unsigned cs);
 
 #endif
 

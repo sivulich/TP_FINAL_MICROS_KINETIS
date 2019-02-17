@@ -20,6 +20,7 @@
 #include "ili9341.h"
 #include "InputHandler.h"
 #include "MP3Player.h"
+#include "LEDMatrix.h"
 
 /*******************************************************************************
  * Variables
@@ -70,6 +71,25 @@ int main(void)
 	/*Creamos el reproductor*/
 	MP3Player.init(&play,&volume);
 
+
+	/*for(int i=0;i<8;i++)
+		for(int j=0;j<8;j++)
+			LEDMatrix.setPoint(i,j,255,255,0);
+	//LEDMatrix.update();
+	int cnt=0;
+	while(1)
+	{
+		for(int i=0;i<2000000;i++)
+			__asm("nop");
+		for(int i=0;i<8;i++)
+			for(int j=0;j<8;j++)
+				if(cnt%2)
+					LEDMatrix.setPoint(i,j,0,255,0);
+				else
+					LEDMatrix.setPoint(i,j,255,0,0);
+		cnt++;
+		LEDMatrix.update();
+	}*/
 	/*Main loop del programa*/
 	while (1)
 	{

@@ -23,7 +23,7 @@
 #define EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER kDSPI_MasterPcs0
 #define EXAMPLE_DSPI_DEALY_COUNT 0xfffffU
 #define TRANSFER_SIZE  (240*320*3)         /* Transfer dataSize */
-#define TRANSFER_BAUDRATE 10000000U /* Transfer baudrate - 50M */
+#define TRANSFER_BAUDRATE 10000000U /* Transfer baudrate - 10M */
 
 /*******************************************************************************
  * Prototypes
@@ -62,6 +62,8 @@ volatile bool isFinished = false;
 volatile unsigned messageLen=0;
 volatile uint8_t* messageData;
 volatile unsigned spiFlush=0;
+volatile unsigned chipSelect=0;
+
 void DSPI_MasterUserCallback(SPI_Type *base, dspi_master_edma_handle_t *handle, status_t status, void *userData)
 {
     if (status == kStatus_Success)
@@ -75,7 +77,7 @@ void DSPI_MasterUserCallback(SPI_Type *base, dspi_master_edma_handle_t *handle, 
     	masterXfer.txData = messageData;
     	masterXfer.dataSize = 32000;
         masterXfer.rxData = NULL;
-    	masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
+        masterXfer.configFlags = kDSPI_MasterCtar0 |  (chipSelect << DSPI_MASTER_PCS_SHIFT) | kDSPI_MasterPcsContinuous;
     	DSPI_MasterTransferEDMA(EXAMPLE_DSPI_MASTER_BASEADDR, &g_dspi_edma_m_handle, &masterXfer);
     	messageData+=32000;
     	messageLen-=32000;
@@ -86,7 +88,7 @@ void DSPI_MasterUserCallback(SPI_Type *base, dspi_master_edma_handle_t *handle, 
 		masterXfer.txData = messageData;
 		masterXfer.dataSize = messageLen;
 		masterXfer.rxData = NULL;
-		masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
+		masterXfer.configFlags = kDSPI_MasterCtar0 |  (chipSelect << DSPI_MASTER_PCS_SHIFT) | kDSPI_MasterPcsContinuous;
 		DSPI_MasterTransferEDMA(EXAMPLE_DSPI_MASTER_BASEADDR, &g_dspi_edma_m_handle, &masterXfer);
 		messageLen=0;
     }
@@ -132,7 +134,7 @@ void SPI_Handler_Init()
 
 
 	EDMA_GetDefaultConfig(&userConfig);
-	userConfig.enableRoundRobinArbitration=true;
+	userConfig.enableRoundRobinArbitration=false;
 	userConfig.enableDebugMode = true;
 	EDMA_Init(EXAMPLE_DSPI_MASTER_DMA_BASEADDR, &userConfig);
 	/*edma_channel_Preemption_config_t priorityConfig;
@@ -150,11 +152,11 @@ void SPI_Handler_Init()
 	masterConfig.ctarConfig.cpol = kDSPI_ClockPolarityActiveHigh;
 	masterConfig.ctarConfig.cpha = kDSPI_ClockPhaseFirstEdge;
 	masterConfig.ctarConfig.direction = kDSPI_MsbFirst;
-	masterConfig.ctarConfig.pcsToSckDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
-	masterConfig.ctarConfig.lastSckToPcsDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
-	masterConfig.ctarConfig.betweenTransferDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
+	masterConfig.ctarConfig.pcsToSckDelayInNanoSec =0;// 1000000000U / TRANSFER_BAUDRATE;
+	masterConfig.ctarConfig.lastSckToPcsDelayInNanoSec =0;// 1000000000U / TRANSFER_BAUDRATE;
+	masterConfig.ctarConfig.betweenTransferDelayInNanoSec =0;// 1000000000U / TRANSFER_BAUDRATE;
 
-	masterConfig.whichPcs = EXAMPLE_DSPI_MASTER_PCS_FOR_INIT;
+	masterConfig.whichPcs = EXAMPLE_DSPI_MASTER_PCS_FOR_INIT | kDSPI_Pcs5;
 	masterConfig.pcsActiveHighOrLow = kDSPI_PcsActiveLow;
 
 	masterConfig.enableContinuousSCK = false;
@@ -182,10 +184,11 @@ void SPI_Handler_Init()
 }
 
 
-void SPI_Write_DMA(uint8_t* data , unsigned len)
+void SPI_Write_DMA(uint8_t* data , unsigned len,unsigned cs)
 {
 
 	if (len == 0) return;           //no need to send anything
+	while(isTransferCompleted == false);
 	while(g_dspi_edma_m_handle.state==kDSPI_Busy);
 	messageLen = len;
 	messageData = data;
@@ -202,7 +205,8 @@ void SPI_Write_DMA(uint8_t* data , unsigned len)
 	masterXfer.txData = data;
 	masterXfer.dataSize = len;
     masterXfer.rxData = NULL;
-	masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
+    masterXfer.configFlags = kDSPI_MasterCtar0 |  (cs << DSPI_MASTER_PCS_SHIFT) | kDSPI_MasterPcsContinuous;
+    chipSelect=cs;
 	status_t ret = DSPI_MasterTransferEDMA(EXAMPLE_DSPI_MASTER_BASEADDR, &g_dspi_edma_m_handle, &masterXfer);
 	isTransferCompleted = false;
 	if (kStatus_Success != ret )
@@ -211,7 +215,7 @@ void SPI_Write_DMA(uint8_t* data , unsigned len)
 	//while(g_dspi_edma_m_handle.state==kDSPI_Busy);
 }
 
-void SPI_Write_Blocking(uint8_t* data , unsigned len)
+void SPI_Write_Blocking(uint8_t* data , unsigned len,unsigned cs)
 {
 	if (len == 0) return;           //no need to send anything
 	messageLen = len;
@@ -229,7 +233,7 @@ void SPI_Write_Blocking(uint8_t* data , unsigned len)
 	masterXfer.txData = data;
 	masterXfer.dataSize = len;
 	masterXfer.rxData = NULL;
-	masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
+	masterXfer.configFlags = kDSPI_MasterCtar0 | (cs << DSPI_MASTER_PCS_SHIFT) | kDSPI_MasterPcsContinuous;
 	status_t ret = DSPI_MasterTransferBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &masterXfer);
 	isTransferCompleted = true;
 	if (kStatus_Success != ret )

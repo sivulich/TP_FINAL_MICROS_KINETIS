@@ -9,6 +9,7 @@
 #include "MP3Decoder.h"
 #include "SigGen.h"
 #include "MP3UI.h"
+#include "LEDMatrix.h"
 
 #define ARM_MATH_CM4 1
 
@@ -24,6 +25,17 @@
 #define BUFFER_SIZE (100U)
 
 #define FFT_LENGTH 1024
+uint8_t eqColors[8][3]={{0,1,0},
+						{0,1,0},
+						{0,1,0},
+						{1,1,0},
+						{1,1,0},
+						{1,1,0},
+						{2,1,0},
+						{2,0,0}};
+
+
+
 
 /*******************************************************************************
  * Variables
@@ -85,7 +97,11 @@ static int init(int* p,int* v)
 	/*Inicializamos el decodificador MP3 y el generador de señales*/
 	MP3DEC.init();
 	SigGen.init();
-
+	LEDMatrix.init();
+	for(int i=0;i<8;i++)
+		for(int j=0;j<8;j++)
+			LEDMatrix.setPoint(i,j,0,0,0);
+	LEDMatrix.update();
 	arm_rfft_init_f32(&rfft_inst, &cfft_inst, FFT_LENGTH, 0, 1);
 	return 0;
 }
@@ -112,7 +128,7 @@ static void update()
 			while(dur<=0)
 				dur=MP3DEC.decode(outBuff[0],&buffLen);
 			MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1,volume,NULL);
-			while(len<=0)
+			while(len<=0 )
 				len=MP3DEC.decode(outBuff[0],&buffLen);
 			MP3FrameInfo finfo=MP3DEC.getFrameInfo();
 
@@ -159,7 +175,7 @@ static void update()
 					len+=ret;
 					for(int i=0;i<buffLen;i++)
 					{
-						if(len>100 && i%2==0)
+						if(len>130 && i%2==0)
 						{
 							input[i/2]=(outBuff[circ%PING_PONG_BUFFS][i]/2+outBuff[circ%PING_PONG_BUFFS][i+1]/2)*1.0/32768;
 						}
@@ -174,6 +190,16 @@ static void update()
 					if(ret>0 && len>130)
 					{
 						pos+=len;
+						for(int i=0;i<8;i++)
+							for(int j=0;j<8;j++)
+							{
+								if(eqPoints[(currEqualizer+1)%2][i]>15*(j+1))
+									LEDMatrix.setPoint(i,7-j,eqColors[j][0],eqColors[j][1],eqColors[j][2]);
+								else
+									LEDMatrix.setPoint(i,7-j,0,0,0);
+							}
+						LEDMatrix.update();
+
 						arm_rfft_f32(&rfft_inst, input, output);
 						arm_cmplx_mag_f32(output, input, FFT_LENGTH);
 						for(int i=0;i<8;i++)
@@ -194,8 +220,11 @@ static void update()
 							eqPoints[currEqualizer][6]+=(float)input[i]*8.0/127;
 						for(int i=235;i<512;i++)
 							eqPoints[currEqualizer][7]+=(float)input[i]*8.0/277;
+
+
 						currEqualizer=(currEqualizer+1)%2;
 						MP3UiSetSongInfo(NULL,NULL,pos/1000,0,volume,eqPoints[currEqualizer]);
+
 						len=0;
 					}
 					else if(ret<0)

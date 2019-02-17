@@ -281,9 +281,9 @@ static void ili9441_send_cmd(uint8_t cmd, int blocking)
 
 	//disp_spi_send(&cmd, 1);
 	if(blocking==1)
-		SPI_Write_Blocking(&cmd, 1);
+		SPI_Write_Blocking(&cmd, 1,0);
 	else
-		SPI_Write_DMA(&cmd,1);
+		SPI_Write_DMA(&cmd,1,0);
 }
 
 static void ili9341_send_data(void * data, unsigned length, int blocking)
@@ -293,7 +293,7 @@ static void ili9341_send_data(void * data, unsigned length, int blocking)
 
 	//disp_spi_send(data, length);
 	if(blocking==1)
-		SPI_Write_Blocking(data, length);
+		SPI_Write_Blocking(data, length,0);
 	else
-		SPI_Write_DMA(data,length);
+		SPI_Write_DMA(data,length,0);
 }

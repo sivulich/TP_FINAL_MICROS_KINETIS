@@ -96,7 +96,7 @@ static int init()
 	 * userConfig.enableDebugMode = false;
 	 */
 	EDMA_GetDefaultConfig(&userConfig);
-	userConfig.enableRoundRobinArbitration=true;
+	userConfig.enableRoundRobinArbitration=false;
 	userConfig.enableDebugMode = true;
 	EDMA_Init(EXAMPLE_DMA, &userConfig);
 	EDMA_CreateHandle(&g_EDMA_Handle, EXAMPLE_DMA, CHANNEL_DMA);
