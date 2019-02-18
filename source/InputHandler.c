@@ -1,6 +1,9 @@
 #include "InputHandler.h"
 #include "fsl_gpio.h"
 #include "fsl_ftm.h"
+#include "fsl_smc.h"
+#include "fsl_llwu.h"
+#include "fsl_debug_console.h"
 #include "../lv_conf.h"
 #include <math.h>
 #include "MP3Ui.h"
@@ -49,7 +52,7 @@ void InputHandlerInit(int* pl,int* cs,int* vol)
 	GPIO_PinInit(GPIOA,4, &config);
 	GPIO_PinInit(GPIOC,6, &config);
 
-	GPIO_PinInit(FORWARD_GPIO, &config);		//fordward
+	//GPIO_PinInit(FORWARD_GPIO, &config);		//fordward
 	GPIO_PinInit(BACKWARD_GPIO, &config);		//backward
 	GPIO_PinInit(PLAY_GPIO, &config);		//play/pause
 	GPIO_PinInit(A_GPIO, &config);		//A
@@ -57,6 +60,7 @@ void InputHandlerInit(int* pl,int* cs,int* vol)
 	GPIO_PinInit(B_GPIO, &config);		//B
 }
 static int lastEnc=0b11,newEnc,storeEnc=0b11,cnt=0;
+static unsigned long long pwrDownCnt=0;
 static lv_indev_state_t encKey=LV_GROUP_KEY_ESC;
 static int lastEncCnt=0;
 #define ENC_RIGHT 0b010010
@@ -79,6 +83,25 @@ bool InputHandlerRead(lv_indev_data_t * data)
 	else if(GPIO_PinRead(PLAY_GPIO)==0)
 	{
 		playPressed=1;
+		pwrDownCnt++;
+		if(pwrDownCnt>=40)
+		{
+
+			smc_power_mode_vlls_config_t config;
+			config.enablePorDetectInVlls0=true;
+			config.subMode = kSMC_StopSub3;
+			LLWU_SetExternalWakeupPinMode(LLWU, 9,  kLLWU_ExternalPinAnyEdge);
+			LLWU_ClearExternalWakeupPinFlag(LLWU,9);
+			//llwu_external_pin_filter_mode_t filterConfig;
+			//filterConfig.pinIndex=9;
+			//filterConfig.filterMode=kLLWU_PinFilterFallingEdge;
+			//LLWU_SetPinFilterMode(LLWU,20,filterConfig);
+			SMC_PreEnterStopModes();
+			SMC_SetPowerModeVlls(SMC,&config);
+			//PRINTF("Si estas leyendo esto no me dormi un carajo. =)\n");
+			//SMC_PostExitStopModes();
+
+		}
 	}
 	/*else if(GPIO_PinRead(GPIOA,4)==0)
 	{
@@ -176,7 +199,7 @@ bool InputHandlerRead(lv_indev_data_t * data)
 			encKey=LV_GROUP_KEY_ESC;
 			cnt=0;
 		}
-
+		pwrDownCnt=0;
 	}
 	data->state = state;
     return false;       /*No more data to read so return false*/

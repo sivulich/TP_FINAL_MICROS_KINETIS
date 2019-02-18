@@ -120,10 +120,10 @@ void SPI_Handler_Init()
 
 	edma_config_t userConfig;
 	uint32_t masterRxChannel, masterTxChannel;
-	masterRxChannel = 0U;
-	masterTxChannel = 1U;
+	masterRxChannel = 4U;
+	masterTxChannel = 5U;
 	uint32_t masterIntermediaryChannel;
-	masterIntermediaryChannel = 2U;
+	masterIntermediaryChannel = 6U;
 	DMAMUX_Init(EXAMPLE_DSPI_MASTER_DMA_MUX_BASEADDR);
 	DMAMUX_SetSource(EXAMPLE_DSPI_MASTER_DMA_MUX_BASEADDR, masterRxChannel,
 					 (uint8_t)EXAMPLE_DSPI_MASTER_DMA_RX_REQUEST_SOURCE);
@@ -167,9 +167,9 @@ void SPI_Handler_Init()
 	DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, srcClock_Hz);
 
 
-	memset(&(dspiEdmaMasterRxRegToRxDataHandle), 0, sizeof(dspiEdmaMasterRxRegToRxDataHandle));
-	memset(&(dspiEdmaMasterTxDataToIntermediaryHandle), 0, sizeof(dspiEdmaMasterTxDataToIntermediaryHandle));
-	memset(&(dspiEdmaMasterIntermediaryToTxRegHandle), 0, sizeof(dspiEdmaMasterIntermediaryToTxRegHandle));
+	//memset(&(dspiEdmaMasterRxRegToRxDataHandle), 0, sizeof(dspiEdmaMasterRxRegToRxDataHandle));
+	//memset(&(dspiEdmaMasterTxDataToIntermediaryHandle), 0, sizeof(dspiEdmaMasterTxDataToIntermediaryHandle));
+	//memset(&(dspiEdmaMasterIntermediaryToTxRegHandle), 0, sizeof(dspiEdmaMasterIntermediaryToTxRegHandle));
 	EDMA_CreateHandle(&(dspiEdmaMasterRxRegToRxDataHandle), EXAMPLE_DSPI_MASTER_DMA_BASEADDR, masterRxChannel);
 	EDMA_CreateHandle(&(dspiEdmaMasterTxDataToIntermediaryHandle), EXAMPLE_DSPI_MASTER_DMA_BASEADDR,
 					  masterIntermediaryChannel);

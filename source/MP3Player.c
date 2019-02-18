@@ -9,30 +9,20 @@
 #include "MP3Decoder.h"
 #include "SigGen.h"
 #include "MP3UI.h"
-#include "LEDMatrix.h"
+#include "LEDDisplay.h"
 
-#define ARM_MATH_CM4 1
 
-#include "arm_math.h"
-#include "arm_const_structs.h"
 #include "fsl_debug_console.h"	//para el PRINTF
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define PING_PONG_BUFFS 10
+#define PING_PONG_BUFFS 16
 /* buffer size (in byte) for read/write operations */
 #define BUFFER_SIZE (100U)
 
 #define FFT_LENGTH 1024
-uint8_t eqColors[8][3]={{0,10,0},
-						{0,10,0},
-						{0,10,0},
-						{10,10,0},
-						{10,10,0},
-						{10,10,0},
-						{20,10,0},
-						{20,0,0}};
+
 
 
 
@@ -83,8 +73,7 @@ static int volumeMap[] = {	0,
  ******************************************************************************/
 static int init(int* p,int* v);
 static void update();
-static arm_rfft_instance_f32 rfft_inst;
-static arm_cfft_radix4_instance_f32 cfft_inst;
+
 static int * pl,*vol;
 static int init(int* p,int* v)
 {
@@ -97,16 +86,10 @@ static int init(int* p,int* v)
 	/*Inicializamos el decodificador MP3 y el generador de señales*/
 	MP3DEC.init();
 	SigGen.init();
-	LEDMatrix.init();
-	for(int i=0;i<8;i++)
-		for(int j=0;j<8;j++)
-			LEDMatrix.setPoint(i,j,0,0,0);
-	LEDMatrix.update();
-	arm_rfft_init_f32(&rfft_inst, &cfft_inst, FFT_LENGTH, 0, 1);
+	LEDDisplay.init();
 	return 0;
 }
-float eqPoints[4][8]={{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0}};
-int currEqualizer=0;
+
 
 static void update()
 {
@@ -171,7 +154,7 @@ static void update()
 				while(circ<currBuff)
 				{
 					circ++;
-					float32_t input[1152], output[2*1152];
+					float input[1152];
 					int ret = MP3DEC.decode(outBuff[circ%PING_PONG_BUFFS],&buffLen);
 					len+=ret;
 					for(int i=0;i<buffLen;i++)
@@ -191,40 +174,8 @@ static void update()
 					if(ret>0 && len>65)
 					{
 						pos+=len;
-						for(int i=0;i<8;i++)
-							for(int j=0;j<8;j++)
-							{
-								if(eqPoints[(currEqualizer+1)%4][i]>15*(j+1))
-									LEDMatrix.setPoint(i,7-j,eqColors[j][0],eqColors[j][1],eqColors[j][2]);
-								else
-									LEDMatrix.setPoint(i,7-j,0,0,0);
-							}
-						LEDMatrix.update();
-
-						arm_rfft_f32(&rfft_inst, input, output);
-						arm_cmplx_mag_f32(output, input, FFT_LENGTH);
-						for(int i=0;i<8;i++)
-							eqPoints[currEqualizer][i]=0;
-						for(int i=0;i<2;i++)
-							eqPoints[currEqualizer][0]+=(float)input[i]*2.0/2;
-						for(int i=2;i<5;i++)
-							eqPoints[currEqualizer][1]+=(float)input[i]*8.0/3;
-						for(int i=5;i<10;i++)
-							eqPoints[currEqualizer][2]+=(float)input[i]*8.0/5;
-						for(int i=10;i<23;i++)
-							eqPoints[currEqualizer][3]+=(float)input[i]*8.0/13;
-						for(int i=23;i<49;i++)
-							eqPoints[currEqualizer][4]+=(float)input[i]*8.0/26;
-						for(int i=49;i<108;i++)
-							eqPoints[currEqualizer][5]+=(float)input[i]*8.0/61;
-						for(int i=108;i<235;i++)
-							eqPoints[currEqualizer][6]+=(float)input[i]*8.0/127;
-						for(int i=235;i<512;i++)
-							eqPoints[currEqualizer][7]+=(float)input[i]*8.0/277;
-
-
-						currEqualizer=(currEqualizer+1)%4;
-						MP3UiSetSongInfo(NULL,NULL,pos/1000,0,volume,eqPoints[currEqualizer]);
+						LEDDisplay.setVumeter(input,FFT_LENGTH,1);
+						MP3UiSetSongInfo(NULL,NULL,pos/1000,0,volume,LEDDisplay.getEqualizer());
 
 						len=0;
 					}
