@@ -13,8 +13,8 @@
 #define BYTES_PER_BYTE 	12
 #define ONE_CODE		0b111111110000
 #define CERO_CODE		0b111100000000
-#define OFFSET			1000
-#define DELAY			1000
+#define OFFSET			80
+#define DELAY			80
 #define ARRAY_LENGTH	LED_HEIGHT*LED_WIDTH*LED_BYTES*BYTES_PER_BYTE+DELAY+OFFSET
 
 #define CERO_CERO_CODE 	0b000000000000111111110000
@@ -49,7 +49,7 @@ static void setPoint(int x,int y,uint8_t r, uint8_t g, uint8_t b)
 	uint8_t* blue = matrix+pos+2*BYTES_PER_BYTE;
 
 	uint64_t colorL=0,colorH=0;
-	for(int i=3;i>=0;i--)
+	for(int i=0;i<=3;i++)
 	{
 		colorH<<=24;
 		colorH|=(colorL>>40);
@@ -74,7 +74,7 @@ static void setPoint(int x,int y,uint8_t r, uint8_t g, uint8_t b)
 		colorH>>=8;
 	}
 	colorL=colorH=0;
-	for(int i=3;i>=0;i--)
+	for(int i=0;i<=3;i++)
 	{
 		colorH<<=24;
 		colorH|=(colorL>>40);
@@ -99,7 +99,7 @@ static void setPoint(int x,int y,uint8_t r, uint8_t g, uint8_t b)
 		colorH>>=8;
 	}
 	colorL=colorH=0;
-	for(int i=3;i>=0;i--)
+	for(int i=0;i<=3;i++)
 	{
 		colorH<<=24;
 		colorH|=(colorL>>40);

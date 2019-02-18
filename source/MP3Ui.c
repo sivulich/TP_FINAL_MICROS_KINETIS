@@ -163,6 +163,7 @@ static lv_res_t fileScreenUpdate(lv_obj_t* obj)
 		//re-creating...
 		fileList[fileListPointer] = lv_list_create(filesScreen, NULL);
 		lv_obj_set_height(fileList[fileListPointer], LV_VER_RES);
+		lv_obj_set_width(fileList[fileListPointer], LV_HOR_RES);
 		lv_obj_t * obs[2]={fileList[fileListPointer]};
 		setActiveGroup(FILE_SCREEN0 + fileListPointer,1, obs);
 
@@ -350,6 +351,8 @@ static void FilesScreenCreate(void)
 	fileList[1] = lv_list_create(filesScreen, NULL);
 	lv_obj_set_height(fileList[0], LV_VER_RES);
 	lv_obj_set_height(fileList[1], LV_VER_RES);
+	lv_obj_set_width(fileList[0], LV_HOR_RES);
+	lv_obj_set_width(fileList[1], LV_HOR_RES);
 	lv_obj_set_hidden(fileList[1], true);
 	for (unsigned i = 0; i < fileListSz; i++)
 	{
