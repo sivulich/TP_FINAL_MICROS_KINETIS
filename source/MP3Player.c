@@ -71,13 +71,14 @@ static int volumeMap[] = {	0,
 /*******************************************************************************
  * Functions
  ******************************************************************************/
-static int init(int* p,int* v);
+static int init(int* p,int* o,int* v);
 static void update();
 
-static int * pl,*vol;
-static int init(int* p,int* v)
+static int * pl,*vol, *off;
+static int init(int* p,int* o,int* v)
 {
 	pl=p;
+	off=o;
 	vol=v;
 	/*Inicializamos los ping pong buffers*/
 	for(int i=0;i<PING_PONG_BUFFS;i++)
@@ -89,11 +90,52 @@ static int init(int* p,int* v)
 	LEDDisplay.init();
 	return 0;
 }
+static void startSong(char* file,int volume)
+{
+	//Reiniciamos el decodificador MP3
+	MP3DEC.unloadFile();
+	MP3DEC.loadFile(file);
+
+	//Obtenemos el header extraemos la información y lo salteamos
+	dur = 0;
+	while(dur<=0)
+		dur=MP3DEC.decode(outBuff[0],&buffLen);
+	MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1,volume,NULL);
+	while(len<=0 )
+		len=MP3DEC.decode(outBuff[0],&buffLen);
+	MP3FrameInfo finfo=MP3DEC.getFrameInfo();
+
+	//Reinicamos el generador de señales y lo configuramos para esta canción
+	SigGen.stop();
+	SigGen.setupSignal(outBuff,PING_PONG_BUFFS,finfo.outputSamps,finfo.samprate*finfo.nChans);
+	len=0;
+	pos=0;
+	//*pl=1;
+	lastStatus=1;
+
+	//Preparamos los ping pong buffers
+	for(int i=0;i<PING_PONG_BUFFS;i++)
+	{
+		len+=MP3DEC.decode(outBuff[i],&buffLen);
+		for(int j=0;j<buffLen;j++)
+		{
+			unsigned temp=(((((int)outBuff[i][j] + 32768))>>4))/2;
+			temp*=volumeMap[volume];
+			temp>>=12;
+			outBuff[i][j]=temp;
+		}
+	}
+
+
+	//Arrancamos la señal
+	//SigGen.start();
+}
 
 
 static void update()
 {
 	int play=*pl;
+	int offset = *off;
 	int volume=*vol;
 	//Si se selecciono un archivo nos devolvera el nombre, si no hay SD -1 y si no se selecciono nada 0
 	char* file = getMP3file();
@@ -102,44 +144,8 @@ static void update()
 		//Si se selecciono un archivo
 		if(file!=NULL)
 		{
-			//Reiniciamos el decodificador MP3
-			MP3DEC.unloadFile();
-			MP3DEC.loadFile(file);
-
-			//Obtenemos el header extraemos la información y lo salteamos
-			dur = 0;
-			while(dur<=0)
-				dur=MP3DEC.decode(outBuff[0],&buffLen);
-			MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1,volume,NULL);
-			while(len<=0 )
-				len=MP3DEC.decode(outBuff[0],&buffLen);
-			MP3FrameInfo finfo=MP3DEC.getFrameInfo();
-
-			//Reinicamos el generador de señales y lo configuramos para esta canción
-			SigGen.stop();
-			SigGen.setupSignal(outBuff,PING_PONG_BUFFS,finfo.outputSamps,finfo.samprate*finfo.nChans);
-			len=0;
-			pos=0;
-			*pl=1;
+			startSong(file,volume);
 			play=1;
-			lastStatus=1;
-
-			//Preparamos los ping pong buffers
-			for(int i=0;i<PING_PONG_BUFFS;i++)
-			{
-				len+=MP3DEC.decode(outBuff[i],&buffLen);
-				for(int j=0;j<buffLen;j++)
-				{
-					unsigned temp=(((((int)outBuff[i][j] + 32768))>>4))/2;
-					temp*=volumeMap[volume];
-					temp>>=12;
-					outBuff[i][j]=temp;
-				}
-			}
-
-
-			//Arrancamos la señal
-			SigGen.start();
 		}
 		if(play==1 && MP3DEC.onFile()==1)
 		{
@@ -183,11 +189,14 @@ static void update()
 						PRINTF("ERROR DECODING %d\n",ret);
 					else if(ret  == 0)
 					{
-						PRINTF("Finished Decoding File!\n");
 						float eqPoints[8]={0,0,0,0,0,0,0,0};
 						MP3UiSetSongInfo(NULL,NULL,dur/1000,0,volume,eqPoints);
 						MP3DEC.unloadFile();
 						SigGen.stop();
+						char nextFile[256];
+						getMP3AdjFile(1,nextFile);
+						startSong(nextFile,volume);
+						//printf("Next file is %s\n",nextFile);
 						break;
 					}
 
@@ -199,6 +208,17 @@ static void update()
 		else if(play==0)
 		{
 			SigGen.pause();
+		}
+		if(offset != 0)
+		{
+			float eqPoints[8]={0,0,0,0,0,0,0,0};
+			MP3UiSetSongInfo(NULL,NULL,dur/1000,0,volume,eqPoints);
+			MP3DEC.unloadFile();
+			SigGen.stop();
+			char nextFile[256];
+			getMP3AdjFile(offset,nextFile);
+			startSong(nextFile,volume);
+			*off = 0;
 		}
 	}
 	else

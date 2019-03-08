@@ -140,10 +140,8 @@ static lv_res_t fileScreenUpdate(lv_obj_t* obj)
 		UIinit=2;
 	}
 
-	printf("Current path %s\n", UI.getPath());
 	if (currFile != 0 && currFile!=(char*)-1)
 	{
-		printf("Selected file %s\n", currFile);
 		newFile=1;
 		newFileName=currFile;
 		setActiveGroup(PLAY_SCREEN,1,&playBackBtn);
@@ -546,3 +544,11 @@ char* getMP3file()
 	return 0;
 
 }
+
+void getMP3AdjFile(int off,char* dest)
+{
+	UI.getAdjFile(off,dest);
+	while(checkMP3file(dest,strlen(dest))==0)
+		UI.getAdjFile(off,dest);
+}
+

@@ -17,7 +17,7 @@ typedef struct MP3Player_ MP3Player_;
 extern MP3Player_ MP3Player;
 
 struct MP3Player_{
-	int (*init)(int* play, int* volume);
+	int (*init)(int* play, int* offset, int* volume);
 	void (*update)();
 
 };

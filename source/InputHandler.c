@@ -14,17 +14,18 @@
 #define A_GPIO GPIOC,1
 #define ENTER_GPIO GPIOC,8
 #define B_GPIO GPIOC,9
-
+#define SCREEN_GPIO GPIOB,9
 
 
 static lv_indev_state_t state;
-static int* play,*currentScreen,*volume;
-void InputHandlerInit(int* pl,int* cs,int* vol)
+static int* play,*currentScreen,*volume,*offset;
+void InputHandlerInit(int* pl,int* off,int* cs,int* vol)
 {
 	//Initialize non-SPI GPIOs
-	play=pl;
-	currentScreen=cs;
-	volume=vol;
+	play = pl;
+	currentScreen = cs;
+	volume = vol;
+	offset = off;
 	gpio_pin_config_t config = {
 	     kGPIO_DigitalInput,
 	 	 0
@@ -58,6 +59,11 @@ void InputHandlerInit(int* pl,int* cs,int* vol)
 	GPIO_PinInit(A_GPIO, &config);		//A
 	GPIO_PinInit(ENTER_GPIO, &config);     //Enter
 	GPIO_PinInit(B_GPIO, &config);		//B
+
+	config.pinDirection = kGPIO_DigitalOutput;
+	config.outputLogic = 1;
+	GPIO_PinInit(SCREEN_GPIO, &config);
+	GPIO_PinWrite(SCREEN_GPIO,1);
 }
 static int lastEnc=0b11,newEnc,storeEnc=0b11,cnt=0;
 static unsigned long long pwrDownCnt=0;
@@ -66,7 +72,7 @@ static int lastEncCnt=0;
 #define ENC_RIGHT 0b010010
 #define ENC_LEFT 0b100001
 
-static int playPressed=0;
+static int playPressed=0, offsetPressed = 0;
 bool InputHandlerRead(lv_indev_data_t * data)
 {
 	newEnc=FTM_GetQuadDecoderCounterValue(FTM2);
@@ -74,11 +80,15 @@ bool InputHandlerRead(lv_indev_data_t * data)
 	{
 		data->key = LV_GROUP_KEY_PREV;
 		state=LV_INDEV_STATE_PR;
+		offsetPressed = -1;
+		//GPIO_PinWrite(SCREEN_GPIO,0);
 	}
 	else if(GPIO_PinRead(FORWARD_GPIO)==0)
 	{
 		data->key=LV_GROUP_KEY_NEXT;
 		state=LV_INDEV_STATE_PR;
+		offsetPressed = 1;
+		//GPIO_PinWrite(SCREEN_GPIO,1);
 	}
 	else if(GPIO_PinRead(PLAY_GPIO)==0)
 	{
@@ -185,6 +195,11 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		{
 			*play^=1;
 			playPressed=0;
+		}
+		if(offsetPressed != 0)
+		{
+			*offset = offsetPressed;
+			offsetPressed = 0;
 		}
 		if(encKey!=LV_GROUP_KEY_ESC && cnt<2)
 		{

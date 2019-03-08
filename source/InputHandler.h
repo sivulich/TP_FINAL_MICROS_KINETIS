@@ -4,7 +4,7 @@
 #include "../lvgl/lvgl.h"
 
 
-void InputHandlerInit(int* pl,int* cs,int* vol);
+void InputHandlerInit(int* pl,int* off,int* cs,int* vol);
 
 bool InputHandlerRead(lv_indev_data_t * data);
 
