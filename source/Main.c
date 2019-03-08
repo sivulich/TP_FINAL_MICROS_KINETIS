@@ -21,19 +21,16 @@
 #include "InputHandler.h"
 #include "MP3Player.h"
 #include "LEDMatrix.h"
+#include "MP3PlayerData.h"
 
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-static int play=1, currentScreen=MAIN_SCREEN, offset=0;
-
 //Drivers for input and display
 static lv_indev_drv_t kb_drv;
 static lv_indev_t * kb_indev;
 static lv_disp_drv_t disp;
 
-/*Volume MAP*/
-static int volume=20;
 
 
 /*******************************************************************************/
@@ -59,7 +56,7 @@ int main(void)
 	lv_disp_drv_register(&disp);
 
 	/*Inicialización de los inputs*/
-	InputHandlerInit(&play,&offset,&currentScreen,&volume);
+	InputHandlerInit();
 	//Registramos los inputs como un keypad
 	kb_drv.type = LV_INDEV_TYPE_KEYPAD;
 	kb_drv.read = InputHandlerRead;
@@ -69,13 +66,12 @@ int main(void)
 	MP3UiCreate(&kb_drv);
 
 	/*Creamos el reproductor*/
-	MP3Player.init(&play,&offset,&volume);
+	MP3Player.init();
 
 	while (1)
 	{
 		MP3Player.update();
 		lv_task_handler();
-		currentScreen=MP3UiGetCurrentScreen();
 	}
 
 	printf("Thanks for using MP3\n");

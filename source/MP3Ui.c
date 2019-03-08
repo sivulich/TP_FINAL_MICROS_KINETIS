@@ -1,5 +1,6 @@
 #include "MP3Ui.h"
 #include "UI.h"
+#include "MP3PlayerData.h"
 #include "MP3Player.h"
 #include <stdio.h>
 
@@ -18,7 +19,7 @@ static char* newFileName;
 static unsigned UIinit=0;
 
 /*Equalizer Screen Info*/
-static lv_obj_t * bassRoller, *midRoller, *trebbleRoller, *eqBackBtn;
+static lv_obj_t *eqBackBtn,*rollers[3];
 
 /*PlayScreen Info*/
 static unsigned duration,currentTime;
@@ -37,12 +38,12 @@ static lv_indev_t* kb_indev;
 /*Groups*/
 
 static lv_group_t * groups[SCREENS];
-static int currentScreen=MAIN_SCREEN;
+//static int currentScreen=MAIN_SCREEN;
 
-int MP3UiGetCurrentScreen()
+/*int MP3UiGetCurrentScreen()
 {
 	return currentScreen;
-}
+}*/
 
 static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 {
@@ -65,7 +66,7 @@ static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 			}
 		}
 			
-	currentScreen=p;
+	MP3PlayerData.currentScreen=p;
 }
 
 
@@ -91,7 +92,7 @@ static lv_res_t btn_action(lv_obj_t * btn)
 	if (btn == mainEqBtn)
 	{
 		lv_scr_load(equalizerScreen);
-		lv_obj_t* obs[4] = { bassRoller, midRoller, trebbleRoller, eqBackBtn};
+		lv_obj_t* obs[4] = { rollers[0], rollers[1], rollers[2], eqBackBtn};
 		setActiveGroup(EQ_SCREEN,4,obs);
 	}
 	else if (btn == mainFileBtn)
@@ -327,14 +328,31 @@ static  lv_obj_t* BackButtonCreate(lv_obj_t* p, lv_res_t (*fn)(lv_obj_t* obj))
 	return backBtn;
 }
 
+
+static lv_res_t EqualizerScreenCB(lv_obj_t* r)
+{
+	for(int i=0;i<sizeof(rollers)/sizeof(rollers[0]);i++)
+	{
+		if(r==rollers[i])
+		{
+			MP3PlayerData.equalizeBands[i]=lv_roller_get_selected(rollers[i])-2;
+			return LV_RES_OK;
+		}
+	}
+	return LV_RES_OK;
+}
+
 static void EqualizerScreenCreate(void)
 {
 	equalizerScreen = lv_obj_create(NULL, NULL);
 	lv_obj_set_style(equalizerScreen, &style_bg);
 	static char *names[] = { "Bass","Mid","Trebble" };
-	bassRoller    = createRoller(names[0], 0* LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
-	midRoller     = createRoller(names[1], 1*LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
-	trebbleRoller = createRoller(names[2], 2* LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
+	rollers[0]  = createRoller(names[0], 0* LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
+	rollers[1]  = createRoller(names[1], 1*LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
+	rollers[2]  = createRoller(names[2], 2* LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
+	lv_roller_set_action(rollers[0], EqualizerScreenCB);
+	lv_roller_set_action(rollers[1], EqualizerScreenCB);
+	lv_roller_set_action(rollers[2], EqualizerScreenCB);
 	eqBackBtn = BackButtonCreate(equalizerScreen, retMainScreen);
 }
 
@@ -548,7 +566,7 @@ char* getMP3file()
 void getMP3AdjFile(int off,char* dest)
 {
 	UI.getAdjFile(off,dest);
-	while(checkMP3file(dest,strlen(dest))==0)
+	while(checkMP3file(dest,strlen(dest))==0 && dest[0]!=0 && dest[0]!=(char)-1)
 		UI.getAdjFile(off,dest);
 }
 

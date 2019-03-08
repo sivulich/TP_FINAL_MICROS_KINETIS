@@ -22,7 +22,7 @@ static char selectedPath[MAX_FILE_NAME]="";
 
 FILINFO de;  // Pointer for directory entry
 
-static int i = 0, cnt = 0, newFile = 0, onFile=0, ini = 1,len=1,currentIndex=0,selectedIndex=0;
+static int i = 0, cnt = 0, newFile = 0, onFile=0, ini = 1,len=1,currentIndex=0,selectedIndex=0,selectedQnt=0;
 
 static DIR tmp, dr;
 
@@ -253,6 +253,12 @@ static char input(char cmd) {
 							break;
 						}
 					}
+					selectedQnt=0;
+					DIR temp;
+					FILINFO itemp;
+					f_opendir(&temp,selectedPath);
+					while(f_readdir(&temp,&itemp)==FR_OK && itemp.fname[0]!=0)
+						selectedQnt++;
 					PRINTF("Selected file is: %s\n its index is: %d\n and its path is: %s\n\n",current[i],selectedIndex,selectedPath);
 				}
 				else
@@ -338,29 +344,26 @@ static void getAdjFile(int offset,char* dest)
 	{
 		DIR folder;
 		FILINFO info;
-		f_opendir(&folder,selectedPath);
-		int pos=selectedIndex+offset;
-		selectedIndex=0;
-		if(pos<0)
+		if(selectedIndex==selectedQnt)
 		{
+			selectedIndex--;
+		}
+		else if(selectedIndex+offset>=selectedQnt)
+		{
+			dest[0]=0;
+			selectedIndex=selectedQnt;
+			return;
+		}
+		f_opendir(&folder,selectedPath);
+
+		int pos=(selectedIndex+offset+2*selectedQnt)%selectedQnt;
+		selectedIndex=pos;
+		for(int j=0;j<pos;j++)
+		{
+			f_readdir(&folder,&info);
 
 		}
-		else
-		{
-			for(int j=0;j<pos;j++)
-			{
-				f_readdir(&folder,&info);
-				if(info.fname[0]==0)
-				{
-					f_opendir(&folder,selectedPath);
-					//f_readdir(&folder,&info);
-					selectedIndex=0;
-				}
-				else
-					selectedIndex++;
-			}
-			f_readdir(&folder,&info);
-		}
+		f_readdir(&folder,&info);
 		strcpy(dest,selectedPath);
 		strcat(dest,"/");
 		strcat(dest,info.fname);

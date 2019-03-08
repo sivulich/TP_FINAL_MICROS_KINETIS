@@ -10,7 +10,7 @@
 #include "SigGen.h"
 #include "MP3UI.h"
 #include "LEDDisplay.h"
-
+#include "MP3PlayerData.h"
 
 #include "fsl_debug_console.h"	//para el PRINTF
 
@@ -22,10 +22,6 @@
 #define BUFFER_SIZE (100U)
 
 #define FFT_LENGTH 1024
-
-
-
-
 
 /*******************************************************************************
  * Variables
@@ -71,15 +67,11 @@ static int volumeMap[] = {	0,
 /*******************************************************************************
  * Functions
  ******************************************************************************/
-static int init(int* p,int* o,int* v);
+static int init();
 static void update();
 
-static int * pl,*vol, *off;
-static int init(int* p,int* o,int* v)
+static int init()
 {
-	pl=p;
-	off=o;
-	vol=v;
 	/*Inicializamos los ping pong buffers*/
 	for(int i=0;i<PING_PONG_BUFFS;i++)
 		outBuff[i]=buff+i*MP3_BUFFER_SIZE/2;
@@ -100,8 +92,8 @@ static void startSong(char* file,int volume)
 	dur = 0;
 	while(dur<=0)
 		dur=MP3DEC.decode(outBuff[0],&buffLen);
-	MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1,volume,NULL);
-	while(len<=0 )
+	MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1,MP3PlayerData.volume,NULL);
+	while(len<=0)
 		len=MP3DEC.decode(outBuff[0],&buffLen);
 	MP3FrameInfo finfo=MP3DEC.getFrameInfo();
 
@@ -120,7 +112,7 @@ static void startSong(char* file,int volume)
 		for(int j=0;j<buffLen;j++)
 		{
 			unsigned temp=(((((int)outBuff[i][j] + 32768))>>4))/2;
-			temp*=volumeMap[volume];
+			temp*=volumeMap[MP3PlayerData.volume];
 			temp>>=12;
 			outBuff[i][j]=temp;
 		}
@@ -134,9 +126,6 @@ static void startSong(char* file,int volume)
 
 static void update()
 {
-	int play=*pl;
-	int offset = *off;
-	int volume=*vol;
 	//Si se selecciono un archivo nos devolvera el nombre, si no hay SD -1 y si no se selecciono nada 0
 	char* file = getMP3file();
 	if(file!=(char*)-1)
@@ -144,10 +133,10 @@ static void update()
 		//Si se selecciono un archivo
 		if(file!=NULL)
 		{
-			startSong(file,volume);
-			play=1;
+			startSong(file,MP3PlayerData.volume);
+			MP3PlayerData.play=1;
 		}
-		if(play==1 && MP3DEC.onFile()==1)
+		if(MP3PlayerData.play==1 && MP3DEC.onFile()==1)
 		{
 			SigGen.start();
 			int status = SigGen.status();
@@ -169,20 +158,18 @@ static void update()
 						{
 							input[i/2]=(outBuff[circ%PING_PONG_BUFFS][i]/2+outBuff[circ%PING_PONG_BUFFS][i+1]/2)*1.0/32768;
 						}
+
 						unsigned temp=(((((int)outBuff[circ%PING_PONG_BUFFS][i] + 32768))>>4))/2;
-						temp*=volumeMap[volume];
+						temp*=volumeMap[MP3PlayerData.volume];
 						temp>>=12;
 						outBuff[circ%PING_PONG_BUFFS][i]=temp;
 					}
-
-
 
 					if(ret>0 && len>65)
 					{
 						pos+=len;
 						LEDDisplay.setVumeter(input,FFT_LENGTH,1);
-						MP3UiSetSongInfo(NULL,NULL,pos/1000,0,volume,LEDDisplay.getEqualizer());
-
+						MP3UiSetSongInfo(NULL,NULL,pos/1000,0,MP3PlayerData.volume,LEDDisplay.getEqualizer());
 						len=0;
 					}
 					else if(ret<0)
@@ -190,12 +177,48 @@ static void update()
 					else if(ret  == 0)
 					{
 						float eqPoints[8]={0,0,0,0,0,0,0,0};
-						MP3UiSetSongInfo(NULL,NULL,dur/1000,0,volume,eqPoints);
+						MP3UiSetSongInfo(NULL,NULL,dur/1000,0,MP3PlayerData.volume,eqPoints);
 						MP3DEC.unloadFile();
 						SigGen.stop();
-						char nextFile[256];
-						getMP3AdjFile(1,nextFile);
-						startSong(nextFile,volume);
+						if(MP3PlayerData.playMode==1 || MP3PlayerData.playMode==0)
+						{
+							char nextFile[256];
+							getMP3AdjFile(1,nextFile);
+							if(nextFile[0]==0)
+							{
+								if(MP3PlayerData.playMode==1)
+								{
+									getMP3AdjFile(1,nextFile);
+									if(nextFile[0]!=(char)-1)
+									{
+										startSong(nextFile,MP3PlayerData.volume);
+									}
+								}
+								else
+								{
+									getMP3AdjFile(1,nextFile);
+									if(nextFile[0]!=(char)-1)
+									{
+										startSong(nextFile,MP3PlayerData.volume);
+										SigGen.pause();
+										MP3PlayerData.play=0;
+									}
+								}
+							}
+							else if(nextFile[0]!=(char)-1)
+							{
+								startSong(nextFile,MP3PlayerData.volume);
+							}
+
+						}
+						else if(MP3PlayerData.playMode == 2)
+						{
+							char nextFile[256];
+							if(nextFile[0]!=(char)-1)
+							{
+								getMP3AdjFile(1,nextFile);
+							}
+						}
 						//printf("Next file is %s\n",nextFile);
 						break;
 					}
@@ -205,20 +228,25 @@ static void update()
 			}
 
 		}
-		else if(play==0)
+		else if(MP3PlayerData.play==0)
 		{
 			SigGen.pause();
 		}
-		if(offset != 0)
+		if(MP3PlayerData.offset != 0)
 		{
 			float eqPoints[8]={0,0,0,0,0,0,0,0};
-			MP3UiSetSongInfo(NULL,NULL,dur/1000,0,volume,eqPoints);
+			MP3UiSetSongInfo(NULL,NULL,dur/1000,0,MP3PlayerData.volume,eqPoints);
 			MP3DEC.unloadFile();
 			SigGen.stop();
 			char nextFile[256];
-			getMP3AdjFile(offset,nextFile);
-			startSong(nextFile,volume);
-			*off = 0;
+			getMP3AdjFile(MP3PlayerData.offset,nextFile);
+			if(nextFile[0]==0)
+				getMP3AdjFile(MP3PlayerData.offset,nextFile);
+			if(nextFile[0]!=(char)-1)
+			{
+				startSong(nextFile,MP3PlayerData.volume);
+			}
+			MP3PlayerData.offset = 0;
 		}
 	}
 	else
