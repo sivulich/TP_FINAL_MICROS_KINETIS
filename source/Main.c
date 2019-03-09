@@ -21,6 +21,7 @@
 #include "InputHandler.h"
 #include "MP3Player.h"
 #include "LEDMatrix.h"
+#include "PowerOffControl.h"
 
 /*******************************************************************************
  * Variables
@@ -31,9 +32,7 @@ static int play=1,currentScreen=MAIN_SCREEN;
 static lv_indev_drv_t kb_drv;
 static lv_indev_t * kb_indev;
 static lv_disp_drv_t disp;
-
-/*Volume MAP*/
-static int volume=30;
+static int volume = 8;
 
 
 /*******************************************************************************/
@@ -41,11 +40,13 @@ static int volume=30;
 int main(void)
 {
 
+	POWEROFF.recover();
+
 	/*Inicialización de la placa*/
     BOARD_InitPins();
     BOARD_BootClockRUN();
     BOARD_InitDebugConsole();
-
+    PRINTF("Starting MP3 Player\n");
 	/*inicialización de littlevgl*/
 	lv_init();
 

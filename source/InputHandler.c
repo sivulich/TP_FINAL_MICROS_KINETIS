@@ -1,9 +1,7 @@
 #include "InputHandler.h"
 #include "fsl_gpio.h"
 #include "fsl_ftm.h"
-#include "fsl_smc.h"
-#include "fsl_llwu.h"
-#include "fsl_debug_console.h"
+#include "PowerOffControl.h"
 #include "../lv_conf.h"
 #include <math.h>
 #include "MP3Ui.h"
@@ -11,12 +9,11 @@
 #define FORWARD_GPIO GPIOC,5
 #define BACKWARD_GPIO GPIOC,0
 #define PLAY_GPIO GPIOC,7
-#define A_GPIO GPIOC,1
 #define ENTER_GPIO GPIOC,8
-#define B_GPIO GPIOC,9
+//#define A_GPIO GPIOC,1
+//#define B_GPIO GPIOC,9
 
-
-
+#define ENCODER_MAX_VAL 255
 static lv_indev_state_t state;
 static int* play,*currentScreen,*volume;
 void InputHandlerInit(int* pl,int* cs,int* vol)
@@ -43,7 +40,7 @@ void InputHandlerInit(int* pl,int* cs,int* vol)
 
 	//FTM2->MODE |= FTM_MODE_WPDIS_MASK;
 	uint32_t startVal = 0;
-	uint32_t overVal = 255;
+	uint32_t overVal = ENCODER_MAX_VAL;
 	FTM_SetQuadDecoderModuloValue(FTM2, startVal, overVal);
 	FTM_ClearQuadDecoderCounterValue(FTM2);
 
@@ -55,9 +52,9 @@ void InputHandlerInit(int* pl,int* cs,int* vol)
 	//GPIO_PinInit(FORWARD_GPIO, &config);		//fordward
 	GPIO_PinInit(BACKWARD_GPIO, &config);		//backward
 	GPIO_PinInit(PLAY_GPIO, &config);		//play/pause
-	GPIO_PinInit(A_GPIO, &config);		//A
 	GPIO_PinInit(ENTER_GPIO, &config);     //Enter
-	GPIO_PinInit(B_GPIO, &config);		//B
+	//GPIO_PinInit(A_GPIO, &config);		//A
+	//GPIO_PinInit(B_GPIO, &config);		//B
 }
 static int lastEnc=0b11,newEnc,storeEnc=0b11,cnt=0;
 static unsigned long long pwrDownCnt=0;
@@ -86,21 +83,9 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		pwrDownCnt++;
 		if(pwrDownCnt>=40)
 		{
-
-			smc_power_mode_vlls_config_t config;
-			config.enablePorDetectInVlls0=true;
-			config.subMode = kSMC_StopSub3;
-			LLWU_SetExternalWakeupPinMode(LLWU, 9,  kLLWU_ExternalPinAnyEdge);
-			LLWU_ClearExternalWakeupPinFlag(LLWU,9);
-			//llwu_external_pin_filter_mode_t filterConfig;
-			//filterConfig.pinIndex=9;
-			//filterConfig.filterMode=kLLWU_PinFilterFallingEdge;
-			//LLWU_SetPinFilterMode(LLWU,20,filterConfig);
-			SMC_PreEnterStopModes();
-			SMC_SetPowerModeVlls(SMC,&config);
-			//PRINTF("Si estas leyendo esto no me dormi un carajo. =)\n");
-			//SMC_PostExitStopModes();
-
+			//while(GPIO_PinRead(PLAY_GPIO)==0)
+			//	1;
+			POWEROFF.powerOff();
 		}
 	}
 	/*else if(GPIO_PinRead(GPIOA,4)==0)
@@ -122,16 +107,16 @@ bool InputHandlerRead(lv_indev_data_t * data)
 	}
 	else if(newEnc!=lastEnc && abs(newEnc-lastEnc)>=2)
 	{
-		if(lastEnc > 128)
+		if(lastEnc > (ENCODER_MAX_VAL+1)/2)
 		{
-			if( (newEnc > (lastEnc-128)) && newEnc<lastEnc)
+			if( (newEnc > (lastEnc-(ENCODER_MAX_VAL+1)/2)) && newEnc<lastEnc)
 				storeEnc=ENC_LEFT;
 			else
 				storeEnc=ENC_RIGHT;
 		}
 		else
 		{
-			if( (newEnc < (lastEnc+128)) && newEnc>lastEnc)
+			if( (newEnc < (lastEnc+(ENCODER_MAX_VAL+1)/2)) && newEnc>lastEnc)
 				storeEnc=ENC_RIGHT;
 			else
 				storeEnc=ENC_LEFT;
@@ -141,7 +126,7 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		lastEnc = newEnc;
 
 	}
-	else if(storeEnc==0b010010 && cnt==0)
+	else if(storeEnc==ENC_RIGHT && cnt==0)
 	{
 		if(*currentScreen==PLAY_SCREEN)
 		{
@@ -160,7 +145,7 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		state=LV_INDEV_STATE_PR;
 		cnt++;
 	}
-	else if(storeEnc==0b100001 && cnt==0)
+	else if(storeEnc==ENC_LEFT && cnt==0)
 	{
 		if(*currentScreen==PLAY_SCREEN)
 		{

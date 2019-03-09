@@ -11,7 +11,6 @@
 #include "MP3UI.h"
 #include "LEDDisplay.h"
 
-
 #include "fsl_debug_console.h"	//para el PRINTF
 
 /*******************************************************************************
@@ -23,10 +22,6 @@
 
 #define FFT_LENGTH 1024
 
-
-
-
-
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -36,6 +31,8 @@ static short* outBuff[PING_PONG_BUFFS];
 static int len=0,dur=0,lastStatus;
 static long long pos=0;
 
+/*Volume MAP*/
+#define MAX_VOLUME 30
 static int volumeMap[] = {	0,
 							137,
 							273,
@@ -110,8 +107,11 @@ static void update()
 			dur = 0;
 			while(dur<=0)
 				dur=MP3DEC.decode(outBuff[0],&buffLen);
-			MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1,volume,NULL);
-			while(len<=0 )
+			char* songTitle = (char*)MP3DEC.getMP3Info("TIT2",&len), *songArtist = (char*)MP3DEC.getMP3Info("TPE1",&len);
+			if(!strcmp(songTitle,"")) songTitle = file;
+			//if(!strcmp(songArtist,"")) songArtist = "Song Artist";
+			MP3UiSetSongInfo(songTitle,songArtist,dur/1000,1,volume,NULL);
+			while(len<=0)
 				len=MP3DEC.decode(outBuff[0],&buffLen);
 			MP3FrameInfo finfo=MP3DEC.getFrameInfo();
 
