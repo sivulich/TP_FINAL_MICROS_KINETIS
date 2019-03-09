@@ -71,6 +71,7 @@ BOARD_InitPins:
   - {pin_num: '65', peripheral: FTM2, signal: 'QD_PH, B', pin_signal: PTB19/CAN0_RX/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB}
   - {pin_num: '69', peripheral: SPI0, signal: PCS5_PCSS, pin_signal: PTB23/SPI2_SIN/SPI0_PCS5/FB_AD28}
   - {pin_num: '77', peripheral: LLWU, signal: 'P, 9', pin_signal: PTC5/LLWU_P9/SPI0_SCK/LPTMR0_ALT2/I2S0_RXD0/FB_AD10/CMP0_OUT/FTM0_CH2}
+  - {pin_num: '57', peripheral: GPIOB, signal: 'GPIO, 9', pin_signal: PTB9/SPI1_PCS1/UART3_CTS_b/FB_AD20}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -111,6 +112,9 @@ void BOARD_InitPins(void)
 
     /* PORTB23 (pin 69) is configured as SPI0_PCS5 */
     PORT_SetPinMux(PORTB, 23U, kPORT_MuxAlt3);
+
+    /* PORTB9 (pin 57) is configured as PTB9 */
+    PORT_SetPinMux(PORTB, 9U, kPORT_MuxAsGpio);
 
     /* PORTC0 (pin 70) is configured as PTC0 */
     PORT_SetPinMux(PORTC, 0U, kPORT_MuxAsGpio);

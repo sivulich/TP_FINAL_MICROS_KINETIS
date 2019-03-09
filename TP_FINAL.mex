@@ -154,6 +154,7 @@
                   <pin peripheral="FTM2" signal="QD_PH, B" pin_num="65" pin_signal="PTB19/CAN0_RX/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB"/>
                   <pin peripheral="SPI0" signal="PCS5_PCSS" pin_num="69" pin_signal="PTB23/SPI2_SIN/SPI0_PCS5/FB_AD28"/>
                   <pin peripheral="LLWU" signal="P, 9" pin_num="77" pin_signal="PTC5/LLWU_P9/SPI0_SCK/LPTMR0_ALT2/I2S0_RXD0/FB_AD10/CMP0_OUT/FTM0_CH2"/>
+                  <pin peripheral="GPIOB" signal="GPIO, 9" pin_num="57" pin_signal="PTB9/SPI1_PCS1/UART3_CTS_b/FB_AD20"/>
                </pins>
             </function>
          </functions_list>

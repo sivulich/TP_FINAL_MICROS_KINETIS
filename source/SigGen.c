@@ -106,6 +106,7 @@ static int init()
 	priorityConfig.enableChannelPreemption=0;
 	priorityConfig.enablePreemptAbility=1;
 	EDMA_SetChannelPreemptionConfig(EXAMPLE_DMA,CHANNEL_DMA,&priorityConfig);*/
+	DAC_Enable(KINETIS_DAC_INSTANCE, true);
 	return 0;
 }
 
@@ -145,7 +146,7 @@ static int start()
 		/* Enable at the NVIC */
 		EnableIRQ(PIT_IRQ_ID);
 		PIT_StartTimer(PIT, PIT_CHANNEL);
-		DAC_Enable(KINETIS_DAC_INSTANCE, true);
+		//DAC_Enable(KINETIS_DAC_INSTANCE, true);
 		EDMA_StartTransfer(&g_EDMA_Handle);
 		DMAMUX_EnableChannel(EXAMPLE_DMAMUX, CHANNEL_DMA);
 		pauseState=0;
@@ -165,7 +166,7 @@ static int pause()
 		DisableIRQ(PIT_IRQ_ID);
 		/* Enable timer interrupts for channel 0 */
 		PIT_DisableInterrupts(PIT, PIT_CHANNEL, kPIT_TimerInterruptEnable);
-		DAC_Enable(KINETIS_DAC_INSTANCE, false);
+		//DAC_Enable(KINETIS_DAC_INSTANCE, false);
 		pauseState=1;
 		return 0;
 	}

@@ -5,6 +5,7 @@
 #include "../lv_conf.h"
 #include <math.h>
 #include "MP3Ui.h"
+#include "MP3PlayerData.h"
 
 #define FORWARD_GPIO GPIOC,5
 #define BACKWARD_GPIO GPIOC,0
@@ -12,16 +13,13 @@
 #define ENTER_GPIO GPIOC,8
 //#define A_GPIO GPIOC,1
 //#define B_GPIO GPIOC,9
+#define SCREEN_GPIO GPIOB,9
 
 #define ENCODER_MAX_VAL 255
 static lv_indev_state_t state;
-static int* play,*currentScreen,*volume;
-void InputHandlerInit(int* pl,int* cs,int* vol)
+void InputHandlerInit()
 {
 	//Initialize non-SPI GPIOs
-	play=pl;
-	currentScreen=cs;
-	volume=vol;
 	gpio_pin_config_t config = {
 	     kGPIO_DigitalInput,
 	 	 0
@@ -55,6 +53,11 @@ void InputHandlerInit(int* pl,int* cs,int* vol)
 	GPIO_PinInit(ENTER_GPIO, &config);     //Enter
 	//GPIO_PinInit(A_GPIO, &config);		//A
 	//GPIO_PinInit(B_GPIO, &config);		//B
+
+	config.pinDirection = kGPIO_DigitalOutput;
+	config.outputLogic = 1;
+	GPIO_PinInit(SCREEN_GPIO, &config);
+	GPIO_PinWrite(SCREEN_GPIO,1);
 }
 static int lastEnc=0b11,newEnc,storeEnc=0b11,cnt=0;
 static unsigned long long pwrDownCnt=0;
@@ -63,7 +66,7 @@ static int lastEncCnt=0;
 #define ENC_RIGHT 0b010010
 #define ENC_LEFT 0b100001
 
-static int playPressed=0;
+static int playPressed=0, offsetPressed = 0;
 bool InputHandlerRead(lv_indev_data_t * data)
 {
 	newEnc=FTM_GetQuadDecoderCounterValue(FTM2);
@@ -71,11 +74,17 @@ bool InputHandlerRead(lv_indev_data_t * data)
 	{
 		data->key = LV_GROUP_KEY_PREV;
 		state=LV_INDEV_STATE_PR;
+		if(MP3PlayerData.currentScreen!=EQ_SCREEN)
+			offsetPressed = -1;
+		//GPIO_PinWrite(SCREEN_GPIO,0);
 	}
 	else if(GPIO_PinRead(FORWARD_GPIO)==0)
 	{
 		data->key=LV_GROUP_KEY_NEXT;
 		state=LV_INDEV_STATE_PR;
+		if(MP3PlayerData.currentScreen!=EQ_SCREEN)
+			offsetPressed = 1;
+		//GPIO_PinWrite(SCREEN_GPIO,1);
 	}
 	else if(GPIO_PinRead(PLAY_GPIO)==0)
 	{
@@ -128,16 +137,16 @@ bool InputHandlerRead(lv_indev_data_t * data)
 	}
 	else if(storeEnc==ENC_RIGHT && cnt==0)
 	{
-		if(*currentScreen==PLAY_SCREEN)
+		if(MP3PlayerData.currentScreen==PLAY_SCREEN)
 		{
 			storeEnc=0b111111;
-			if((*volume)>0)
-				*volume=*volume-1;
+			if(MP3PlayerData.volume>0)
+				MP3PlayerData.volume=MP3PlayerData.volume-1;
 			data->key=LV_GROUP_KEY_ESC;
 			data->state=LV_INDEV_STATE_REL;
 			return false;
 		}
-		else if(*currentScreen==MAIN_SCREEN)
+		else if(MP3PlayerData.currentScreen==MAIN_SCREEN)
 			data->key=LV_GROUP_KEY_PREV;
 		else
 			data->key = LV_GROUP_KEY_LEFT;
@@ -147,16 +156,16 @@ bool InputHandlerRead(lv_indev_data_t * data)
 	}
 	else if(storeEnc==ENC_LEFT && cnt==0)
 	{
-		if(*currentScreen==PLAY_SCREEN)
+		if(MP3PlayerData.currentScreen==PLAY_SCREEN)
 		{
 			storeEnc=0b111111;
-			if((*volume)<30)
-				*volume=*volume+1;
+			if(MP3PlayerData.volume<MAX_VOLUME)
+				MP3PlayerData.volume=MP3PlayerData.volume+1;
 			data->key=LV_GROUP_KEY_ESC;
 			data->state=LV_INDEV_STATE_REL;
 			return false;
 		}
-		else if(*currentScreen==MAIN_SCREEN)
+		else if(MP3PlayerData.currentScreen==MAIN_SCREEN)
 			data->key=LV_GROUP_KEY_NEXT;
 		else
 			data->key = LV_GROUP_KEY_RIGHT;
@@ -168,8 +177,13 @@ bool InputHandlerRead(lv_indev_data_t * data)
 	{
 		if(playPressed==1)
 		{
-			*play^=1;
+			MP3PlayerData.play^=1;
 			playPressed=0;
+		}
+		if(offsetPressed != 0)
+		{
+			MP3PlayerData.offset = offsetPressed;
+			offsetPressed = 0;
 		}
 		if(encKey!=LV_GROUP_KEY_ESC && cnt<2)
 		{

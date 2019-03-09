@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 #define MAX_FILE_NAME 	256
-#define MAX_FILES		10
+#define MAX_FILES		12
 
 typedef char (*currarr)[MAX_FILE_NAME+1];
 
@@ -37,7 +37,10 @@ struct UI_
 	void(*exitFile)();
 	currarr  (*getCurrent)(unsigned* sz, unsigned *pos);
 	void (*setPos)(int p);
+	void (*getAdjFile)(int offset,char* dest);
+
 	void(*close)();
+
 };
 #ifdef __cplusplus
 }
