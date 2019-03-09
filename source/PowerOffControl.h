@@ -8,9 +8,8 @@
 #ifndef POWEROFFCONTROL_H_
 #define POWEROFFCONTROL_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define SCREEN_GPIO GPIOB,9
+#define ONOFF_GPIO	GPIOX,x
 
 typedef struct POWEROFF_ POWEROFF_;
 
@@ -29,8 +28,4 @@ struct POWEROFF_
 	void(*recover)();
 
 };
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* POWEROFFCONTROL_H_ */

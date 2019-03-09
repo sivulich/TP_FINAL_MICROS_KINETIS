@@ -7,15 +7,17 @@
 #include "MP3Ui.h"
 #include "MP3PlayerData.h"
 
-#define FORWARD_GPIO GPIOC,5
+#define FORWARD_GPIO GPIOC,7
 #define BACKWARD_GPIO GPIOC,0
-#define PLAY_GPIO GPIOC,7
+#define PLAY_GPIO GPIOC,5
 #define ENTER_GPIO GPIOC,8
 //#define A_GPIO GPIOC,1
 //#define B_GPIO GPIOC,9
-#define SCREEN_GPIO GPIOB,9
+//#define SCREEN_GPIO GPIOB,9
 
 #define ENCODER_MAX_VAL 255
+#define ENC_RIGHT 0b010010
+#define ENC_LEFT 0b100001
 static lv_indev_state_t state;
 void InputHandlerInit()
 {
@@ -36,7 +38,6 @@ void InputHandlerInit()
 
 	ftm_quad_decode_mode_t quadMode = kFTM_QuadPhaseEncode;
 
-	//FTM2->MODE |= FTM_MODE_WPDIS_MASK;
 	uint32_t startVal = 0;
 	uint32_t overVal = ENCODER_MAX_VAL;
 	FTM_SetQuadDecoderModuloValue(FTM2, startVal, overVal);
@@ -59,12 +60,9 @@ void InputHandlerInit()
 	GPIO_PinInit(SCREEN_GPIO, &config);
 	GPIO_PinWrite(SCREEN_GPIO,1);
 }
-static int lastEnc=0b11,newEnc,storeEnc=0b11,cnt=0;
-static unsigned long long pwrDownCnt=0;
+static int lastEnc = 0b11, newEnc, storeEnc = 0b11, cnt = 0, lastEncCnt = 0;
+static unsigned long long pwrDownCnt = 0;
 static lv_indev_state_t encKey=LV_GROUP_KEY_ESC;
-static int lastEncCnt=0;
-#define ENC_RIGHT 0b010010
-#define ENC_LEFT 0b100001
 
 static int playPressed=0, offsetPressed = 0;
 bool InputHandlerRead(lv_indev_data_t * data)
@@ -76,7 +74,6 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		state=LV_INDEV_STATE_PR;
 		if(MP3PlayerData.currentScreen!=EQ_SCREEN)
 			offsetPressed = -1;
-		//GPIO_PinWrite(SCREEN_GPIO,0);
 	}
 	else if(GPIO_PinRead(FORWARD_GPIO)==0)
 	{
@@ -84,18 +81,13 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		state=LV_INDEV_STATE_PR;
 		if(MP3PlayerData.currentScreen!=EQ_SCREEN)
 			offsetPressed = 1;
-		//GPIO_PinWrite(SCREEN_GPIO,1);
 	}
 	else if(GPIO_PinRead(PLAY_GPIO)==0)
 	{
 		playPressed=1;
 		pwrDownCnt++;
 		if(pwrDownCnt>=40)
-		{
-			//while(GPIO_PinRead(PLAY_GPIO)==0)
-			//	1;
 			POWEROFF.powerOff();
-		}
 	}
 	/*else if(GPIO_PinRead(GPIOA,4)==0)
 	{

@@ -22,7 +22,6 @@
 #include "MP3Player.h"
 #include "LEDMatrix.h"
 #include "PowerOffControl.h"
-#include "MP3PlayerData.h"
 
 /*******************************************************************************
  * Variables

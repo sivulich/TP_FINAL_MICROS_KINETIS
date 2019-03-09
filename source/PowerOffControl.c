@@ -16,13 +16,16 @@ static void recover()
 	if(PMC_GetPeriphIOIsolationFlag(PMC))
 	{
 		PMC_ClearPeriphIOIsolationFlag(PMC);
+		GPIO_PinWrite(SCREEN_GPIO,1);
 	}
 }
 
 static void powerOff()
 {
+	//recover();
+	GPIO_PinWrite(SCREEN_GPIO,0);
 	LLWU_ClearExternalWakeupPinFlag(LLWU,9);
-	LLWU_SetExternalWakeupPinMode(LLWU, 9,  kLLWU_ExternalPinAnyEdge);
+	LLWU_SetExternalWakeupPinMode(LLWU, 9,  kLLWU_ExternalPinFallingEdge);
 	//llwu_external_pin_filter_mode_t filterConfig;
 	//filterConfig.pinIndex=9;
 	//filterConfig.filterMode=kLLWU_PinFilterFallingEdge;

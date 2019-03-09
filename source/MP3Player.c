@@ -11,8 +11,8 @@
 #include "MP3UI.h"
 #include "LEDDisplay.h"
 #include "MP3PlayerData.h"
-
-#include "fsl_debug_console.h"	//para el PRINTF
+#include <string.h>
+#include "fsl_debug_console.h"
 
 /*******************************************************************************
  * Definitions
@@ -92,7 +92,23 @@ static void startSong(char* file,int volume)
 	dur = 0;
 	while(dur<=0)
 		dur=MP3DEC.decode(outBuff[0],&buffLen);
-	MP3UiSetSongInfo((char*)MP3DEC.getMP3Info("TIT2",&len),(char*)MP3DEC.getMP3Info("TPE1",&len),dur/1000,1,MP3PlayerData.volume,NULL);
+	char* songTitle = (char*)MP3DEC.getMP3Info("TIT2",&len), *songArtist = (char*)MP3DEC.getMP3Info("TPE1",&len);
+	if(!strcmp(songTitle,""))
+	{
+		songTitle = strrchr(file, (int)'/');
+		songTitle++;
+		int k = 0;
+		while(songTitle[k++]!=0)
+		{
+			if(songTitle[k]=='.')
+				if(songTitle[k+1]=='m' || songTitle[k+1]=='M')
+					if(songTitle[k+2]=='p' || songTitle[k+2]=='P')
+						if(songTitle[k+3]=='3')
+							songTitle[k]='\0';
+		}
+
+	}
+	MP3UiSetSongInfo(songTitle,songArtist,dur/1000,1,MP3PlayerData.volume,NULL);
 	while(len<=0)
 		len=MP3DEC.decode(outBuff[0],&buffLen);
 	MP3FrameInfo finfo=MP3DEC.getFrameInfo();
@@ -102,7 +118,6 @@ static void startSong(char* file,int volume)
 	SigGen.setupSignal(outBuff,PING_PONG_BUFFS,finfo.outputSamps,finfo.samprate*finfo.nChans);
 	len=0;
 	pos=0;
-	//*pl=1;
 	lastStatus=1;
 
 	//Preparamos los ping pong buffers
@@ -117,7 +132,6 @@ static void startSong(char* file,int volume)
 			outBuff[i][j]=temp;
 		}
 	}
-
 
 	//Arrancamos la señal
 	//SigGen.start();
