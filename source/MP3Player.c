@@ -7,6 +7,7 @@
 
 #include "MP3Player.h"
 #include "MP3Decoder.h"
+#include "MP3Equalizer.h"
 #include "SigGen.h"
 #include "MP3UI.h"
 #include "LEDDisplay.h"
@@ -21,14 +22,15 @@
 /* buffer size (in byte) for read/write operations */
 #define BUFFER_SIZE (100U)
 
-#define FFT_LENGTH 1024
-
 /*******************************************************************************
  * Variables
  ******************************************************************************/
 static unsigned buffLen;
-static short buff[MP3_BUFFER_SIZE*PING_PONG_BUFFS/2];
-static short* outBuff[PING_PONG_BUFFS];
+static unsigned short buffL[PING_PONG_BUFFS*MP3_BUFFER_SIZE/4];
+static unsigned short buffR[PING_PONG_BUFFS*MP3_BUFFER_SIZE/4];
+static unsigned short* outBuffL[PING_PONG_BUFFS];
+static unsigned short* outBuffR[PING_PONG_BUFFS];
+static short decodeOut[MP3_BUFFER_SIZE/2];
 static int len=0,dur=0,lastStatus;
 static long long pos=0;
 
@@ -74,7 +76,10 @@ static int init()
 {
 	/*Inicializamos los ping pong buffers*/
 	for(int i=0;i<PING_PONG_BUFFS;i++)
-		outBuff[i]=buff+i*MP3_BUFFER_SIZE/2;
+	{
+		outBuffL[i]=buffL+i*(MP3_BUFFER_SIZE/4);		//LEFT
+		outBuffR[i]=buffR+i*(MP3_BUFFER_SIZE/4);		//RIGHT
+	}
 
 	/*Inicializamos el decodificador MP3 y el generador de señales*/
 	MP3DEC.init();
@@ -91,14 +96,13 @@ static void startSong(char* file,int volume)
 	//Obtenemos el header extraemos la información y lo salteamos
 	dur = 0;
 	while(dur<=0)
-		dur=MP3DEC.decode(outBuff[0],&buffLen);
+		dur=MP3DEC.decode(decodeOut,&buffLen);
 	char* songTitle = (char*)MP3DEC.getMP3Info("TIT2",&len), *songArtist = (char*)MP3DEC.getMP3Info("TPE1",&len);
 	if(!strcmp(songTitle,""))
 	{
 		songTitle = strrchr(file, (int)'/');
 		songTitle++;
-		int k = 0;
-		while(songTitle[k++]!=0)
+		for(int k = 0; songTitle[k] != 0; k++)
 		{
 			if(songTitle[k]=='.')
 				if(songTitle[k+1]=='m' || songTitle[k+1]=='M')
@@ -106,16 +110,16 @@ static void startSong(char* file,int volume)
 						if(songTitle[k+3]=='3')
 							songTitle[k]='\0';
 		}
-
 	}
 	MP3UiSetSongInfo(songTitle,songArtist,dur/1000,1,MP3PlayerData.volume,NULL);
 	while(len<=0)
-		len=MP3DEC.decode(outBuff[0],&buffLen);
+		len=MP3DEC.decode(decodeOut,&buffLen);
 	MP3FrameInfo finfo=MP3DEC.getFrameInfo();
 
 	//Reinicamos el generador de señales y lo configuramos para esta canción
 	SigGen.stop();
-	SigGen.setupSignal(outBuff,PING_PONG_BUFFS,finfo.outputSamps,finfo.samprate*finfo.nChans);
+	SigGen.setupSignal(outBuffL,outBuffR,PING_PONG_BUFFS,finfo.outputSamps/finfo.nChans,finfo.samprate);
+	MP3Equalizer.init(finfo.samprate);
 	len=0;
 	pos=0;
 	lastStatus=1;
@@ -123,13 +127,36 @@ static void startSong(char* file,int volume)
 	//Preparamos los ping pong buffers
 	for(int i=0;i<PING_PONG_BUFFS;i++)
 	{
-		len+=MP3DEC.decode(outBuff[i],&buffLen);
-		for(int j=0;j<buffLen;j++)
+		len+=MP3DEC.decode(decodeOut,&buffLen);
+		if(buffLen > 1152)
 		{
-			unsigned temp=(((((int)outBuff[i][j] + 32768))>>4))/2;
-			temp*=volumeMap[MP3PlayerData.volume];
-			temp>>=12;
-			outBuff[i][j]=temp;
+			for(int j=0;j<buffLen/2;j++)
+			{
+				MP3Equalizer.equalize(decodeOut+2*j,outBuffL[i]+j,1,0);
+				unsigned temp=(((((int)outBuffL[i][j] + 32768))>>4))/2;
+				temp*=volumeMap[MP3PlayerData.volume];
+				temp>>=12;
+				outBuffL[i][j] = temp;
+
+				MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
+				temp=(((((int)outBuffR[i][j] + 32768))>>4))/2;
+				temp*=volumeMap[MP3PlayerData.volume];
+				temp>>=12;
+				outBuffR[i][j] = temp;
+				outBuffL[i][j] = outBuffL[i][j]/2 + outBuffR[i][j]/2;
+			}
+		}
+		else
+		{
+			for(int j=0;j<buffLen;j++)
+			{
+				MP3Equalizer.equalize(decodeOut+j,outBuffL[i]+j,1,0);
+				unsigned temp=(((((int)outBuffL[i][j] + 32768))>>4))/2;
+				temp*=volumeMap[MP3PlayerData.volume];
+				temp>>=12;
+				outBuffL[i][j]=temp;
+				outBuffR[i][j]=temp;
+			}
 		}
 	}
 
@@ -163,26 +190,68 @@ static void update()
 				while(circ<currBuff)
 				{
 					circ++;
-					float input[1152];
-					int ret = MP3DEC.decode(outBuff[circ%PING_PONG_BUFFS],&buffLen);
+					//float input[1152];
+					int ret = MP3DEC.decode(decodeOut,&buffLen);
 					len+=ret;
-					for(int i=0;i<buffLen;i++)
+					//short outEqL[MP3_BUFFER_SIZE/2];
+					//short outEqR[MP3_BUFFER_SIZE/2];
+					if(buffLen > 1152)
+					{
+						//Stereo audio
+						for(int j=0;j<buffLen/2;j++)
+						{
+							MP3Equalizer.equalize(decodeOut+2*j,outBuffL[circ%PING_PONG_BUFFS]+j,1,0);
+							unsigned temp=(((((int)outBuffL[circ%PING_PONG_BUFFS][j] + 32768))>>4))/2;
+							temp*=volumeMap[MP3PlayerData.volume];
+							temp>>=12;
+							outBuffL[circ%PING_PONG_BUFFS][j] = temp;
+
+							if(MP3Equalizer.equalize == NULL)
+							{
+								PRINTF("WAT\n");
+							}
+							MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[circ%PING_PONG_BUFFS]+j,1,1);
+							temp=(((((int)outBuffR[circ%PING_PONG_BUFFS][j] + 32768))>>4))/2;
+							temp*=volumeMap[MP3PlayerData.volume];
+							temp>>=12;
+							outBuffR[circ%PING_PONG_BUFFS][j] = temp;
+							outBuffL[circ%PING_PONG_BUFFS][j] = outBuffL[circ%PING_PONG_BUFFS][j]/2 + outBuffR[circ%PING_PONG_BUFFS][j]/2;
+						}
+					}
+					else
+					{
+						//Mono audio
+						for(int j=0;j<buffLen;j++)
+						{
+							MP3Equalizer.equalize(decodeOut+j,outBuffL[circ%PING_PONG_BUFFS]+j,1,0);
+							unsigned temp=(((((int)outBuffL[circ%PING_PONG_BUFFS][j] + 32768))>>4))/2;
+							temp*=volumeMap[MP3PlayerData.volume];
+							temp>>=12;
+							outBuffL[circ%PING_PONG_BUFFS][j]=temp;
+							outBuffR[circ%PING_PONG_BUFFS][j]=temp;
+						}
+					}
+					/*for(int i=0;i<buffLen;i++)
 					{
 						if(len>65 && i%2==0)
 						{
 							input[i/2]=(outBuff[circ%PING_PONG_BUFFS][i]/2+outBuff[circ%PING_PONG_BUFFS][i+1]/2)*1.0/32768;
 						}
+						//ecualizar por bandas
+
+						MP3Equalizer.equalize();
 
 						unsigned temp=(((((int)outBuff[circ%PING_PONG_BUFFS][i] + 32768))>>4))/2;
 						temp*=volumeMap[MP3PlayerData.volume];
 						temp>>=12;
 						outBuff[circ%PING_PONG_BUFFS][i]=temp;
-					}
+					}*/
 
 					if(ret>0 && len>65)
 					{
 						pos+=len;
-						LEDDisplay.setVumeter(input,FFT_LENGTH,1);
+						MP3FrameInfo finfo=MP3DEC.getFrameInfo();
+						LEDDisplay.setVumeter(decodeOut,finfo.outputSamps,1);
 						MP3UiSetSongInfo(NULL,NULL,pos/1000,0,MP3PlayerData.volume,LEDDisplay.getEqualizer());
 						len=0;
 					}

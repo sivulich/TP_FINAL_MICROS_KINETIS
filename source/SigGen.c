@@ -11,7 +11,6 @@
 #include "fsl_dac.h"
 #include "fsl_edma.h"
 #include "fsl_dmamux.h"
-#include "fsl_vref.h"
 
 #define KINETIS_DAC_INSTANCE       DAC0
 #define PIT_DATA_HANDLER PIT3_IRQHandler
@@ -26,7 +25,7 @@
 
 
 static int init();
-static int setupSignal(short** bu,int qnt,unsigned len,unsigned fre);
+static int setupSignal(unsigned short** buL,unsigned short** buR,int qnt,unsigned len,unsigned fre);
 static int start();
 /*If returns 1, you should fill buff1, if it returns 2 you should fill buf2, if it returns 0 everthing is OK!*/
 static int status();
@@ -35,7 +34,8 @@ static int stop();
 
 
 static int setUp=0,pauseState=0,buffQnt;
-static short** buffs;
+static unsigned short** buffsL, **buffsR;
+static unsigned short monoBuffer[1152];
 static volatile unsigned buffLen,freq,currPos,currBuff;
 static volatile int informed=0,setDac=0;
 
@@ -61,7 +61,11 @@ void EDMA_Callback(edma_handle_t *handle, void *param, bool transferDone, uint32
         {
         	currBuff=(currBuff+1)%buffQnt;
         	informed=0;
-        	EDMA_PrepareTransfer(&transferConfig, buffs[currBuff], 2, DAC0->DAT, 2,
+        	/*for(int i = 0; i < 1152; i++)
+			{
+				monoBuffer[i] = buffsL[currBuff][i]/2 + buffsR[currBuff][i]/2;
+			}*/
+        	EDMA_PrepareTransfer(&transferConfig, buffsL[currBuff], 2, DAC0->DAT, 2,
         									 2, buffLen*2, kEDMA_MemoryToPeripheral);
         	EDMA_SubmitTransfer(&g_EDMA_Handle, &transferConfig);
         	EDMA_StartTransfer(&g_EDMA_Handle);
@@ -96,8 +100,8 @@ static int init()
 	 * userConfig.enableDebugMode = false;
 	 */
 	EDMA_GetDefaultConfig(&userConfig);
-	userConfig.enableRoundRobinArbitration=false;
-	userConfig.enableDebugMode = true;
+	userConfig.enableRoundRobinArbitration=true;
+	userConfig.enableDebugMode = false;
 	EDMA_Init(EXAMPLE_DMA, &userConfig);
 	EDMA_CreateHandle(&g_EDMA_Handle, EXAMPLE_DMA, CHANNEL_DMA);
 	EDMA_SetCallback(&g_EDMA_Handle, EDMA_Callback, NULL);
@@ -111,11 +115,12 @@ static int init()
 }
 
 
-static int setupSignal(short** bu,int qnt,unsigned len,unsigned fre)
+static int setupSignal(unsigned short** buL, unsigned short** buR, int qnt,unsigned len,unsigned fre)
 {
 	if(setUp==0)
 	{
-		buffs=bu;
+		buffsL=buL;
+		buffsR=buR;
 		buffLen=len;
 		buffQnt=qnt;
 		freq=fre;
@@ -127,7 +132,12 @@ static int setupSignal(short** bu,int qnt,unsigned len,unsigned fre)
 		pauseState=1;
 		/* Set timer period for channel 0 */
 		PIT_SetTimerPeriod(PIT, PIT_CHANNEL, USEC_TO_COUNT(1000000U/fre, PIT_SOURCE_CLOCK)+1);
-		EDMA_PrepareTransfer(&transferConfig, buffs[currBuff], 2, DAC0->DAT, 2,
+
+		/*for(int i = 0; i < 1152; i++)
+		{
+			monoBuffer[i] = buffsL[currBuff][i]/2 + buffsR[currBuff][i]/2;
+		}*/
+		EDMA_PrepareTransfer(&transferConfig, buffsL[currBuff], 2, DAC0->DAT, 2,
 								 2, buffLen*2, kEDMA_MemoryToPeripheral);
 		EDMA_SubmitTransfer(&g_EDMA_Handle, &transferConfig);
 		return 0;

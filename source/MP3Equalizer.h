@@ -15,7 +15,9 @@ extern MP3Equalizer_ MP3Equalizer;
 struct MP3Equalizer_{
 	void (*init)(int fs);
 
-	void (*equalize)(short* input, short* output, int len);
+	void (*equalize)(short* input, short* output, int len, int dir);
+
+	void(*setGains)(int* gains);
 
 };
 

@@ -20,7 +20,7 @@ extern LEDDisplay_ LEDDisplay;
 struct LEDDisplay_{
 	void (*init)();
 
-	void (*setVumeter)(float* input,unsigned len,int mode);
+	void (*setVumeter)(short* input,unsigned len,int mode);
 
 	float* (*getEqualizer)();
 };

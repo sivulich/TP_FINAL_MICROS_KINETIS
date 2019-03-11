@@ -2,6 +2,7 @@
 #include "UI.h"
 #include "MP3PlayerData.h"
 #include "MP3Player.h"
+#include "MP3Equalizer.h"
 #include <stdio.h>
 
 static lv_res_t fileScreenUpdate(lv_obj_t* obj);
@@ -331,14 +332,12 @@ static  lv_obj_t* BackButtonCreate(lv_obj_t* p, lv_res_t (*fn)(lv_obj_t* obj))
 
 static lv_res_t EqualizerScreenCB(lv_obj_t* r)
 {
-	for(int i=0;i<sizeof(rollers)/sizeof(rollers[0]);i++)
+	int gains[EQ_BANDS];
+	for(int i = 0; i < EQ_BANDS; i++)
 	{
-		if(r==rollers[i])
-		{
-			MP3PlayerData.equalizeBands[i]=lv_roller_get_selected(rollers[i])-2;
-			return LV_RES_OK;
-		}
+		gains[i] = (lv_roller_get_selected(rollers[i])-2) * 6;
 	}
+	MP3Equalizer.setGains(gains);
 	return LV_RES_OK;
 }
 

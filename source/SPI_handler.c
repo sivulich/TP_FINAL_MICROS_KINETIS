@@ -134,8 +134,8 @@ void SPI_Handler_Init()
 
 
 	EDMA_GetDefaultConfig(&userConfig);
-	userConfig.enableRoundRobinArbitration=false;
-	userConfig.enableDebugMode = true;
+	userConfig.enableRoundRobinArbitration=true;
+	userConfig.enableDebugMode = false;
 	EDMA_Init(EXAMPLE_DSPI_MASTER_DMA_BASEADDR, &userConfig);
 	/*edma_channel_Preemption_config_t priorityConfig;
 	priorityConfig.channelPriority=1;

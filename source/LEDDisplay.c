@@ -9,7 +9,7 @@
 #include "LEDDisplay.h"
 #include "LEDMatrix.h"
 #define ARM_MATH_CM4 1
-
+#define FFT_LENGTH 1024
 #include "arm_math.h"
 #include "arm_const_structs.h"
 
@@ -270,7 +270,7 @@ static void centerVumeter()
 }
 
 
-static void setVumeter(float* input,unsigned len,int mode)
+static void setVumeter(short* in,unsigned outputSamps,int mode)
 {
 	if(mode==0)
 		barVumeter();
@@ -285,9 +285,17 @@ static void setVumeter(float* input,unsigned len,int mode)
 	else if(mode==5)
 		circ4Vumeter();
 
-
+	unsigned len = FFT_LENGTH;
 	LEDMatrix.update();
-	float output[2*1152];
+	float output[2*1152], input[1152];
+	if(outputSamps>1152)
+	{
+		for(int i = 0; i < outputSamps/2; i++)
+			input[i]=((int)in[2*i]/2+in[2*i+1]/2)*1.0/32768;
+	}
+	else
+		for(int i = 0; i < outputSamps; i++)
+			input[i]=(((int)in[i]))*1.0/32768;
 	arm_rfft_f32(&rfft_inst, input, output);
 	arm_cmplx_mag_f32(output, input, len);
 	for(int i=0;i<8;i++)
