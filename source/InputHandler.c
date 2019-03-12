@@ -70,17 +70,36 @@ bool InputHandlerRead(lv_indev_data_t * data)
 	newEnc=FTM_GetQuadDecoderCounterValue(FTM2);
 	if(GPIO_PinRead(BACKWARD_GPIO)==0)
 	{
-		data->key = LV_GROUP_KEY_PREV;
-		state=LV_INDEV_STATE_PR;
-		if(MP3PlayerData.currentScreen!=EQ_SCREEN)
+		if( MP3PlayerData.currentScreen==MAIN_SCREEN ||
+		    MP3PlayerData.currentScreen==PLAY_SCREEN ||
+			MP3PlayerData.currentScreen==FILE_SCREEN1||
+			MP3PlayerData.currentScreen==FILE_SCREEN0)
+		{
 			offsetPressed = -1;
+		}
+		else
+		{
+			data->key = LV_GROUP_KEY_PREV;
+			state=LV_INDEV_STATE_PR;
+			//if(MP3PlayerData.currentScreen!=EQ_SCREEN)
+		}
 	}
 	else if(GPIO_PinRead(FORWARD_GPIO)==0)
 	{
-		data->key=LV_GROUP_KEY_NEXT;
-		state=LV_INDEV_STATE_PR;
-		if(MP3PlayerData.currentScreen!=EQ_SCREEN)
-			offsetPressed = 1;
+		if( MP3PlayerData.currentScreen==MAIN_SCREEN ||
+		    MP3PlayerData.currentScreen==PLAY_SCREEN ||
+			MP3PlayerData.currentScreen==FILE_SCREEN1||
+			MP3PlayerData.currentScreen==FILE_SCREEN0 )
+		{
+			offsetPressed = -1;
+		}
+		else
+		{
+			data->key = LV_GROUP_KEY_NEXT;
+			state=LV_INDEV_STATE_PR;
+			//if(MP3PlayerData.currentScreen!=EQ_SCREEN)
+			//	offsetPressed = 1;
+		}
 	}
 	else if(GPIO_PinRead(PLAY_GPIO)==0)
 	{
@@ -167,7 +186,7 @@ bool InputHandlerRead(lv_indev_data_t * data)
 	}
 	else
 	{
-		if(playPressed==1)
+		if(playPressed == 1)
 		{
 			MP3PlayerData.play^=1;
 			playPressed=0;

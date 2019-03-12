@@ -72,6 +72,8 @@ BOARD_InitPins:
   - {pin_num: '69', peripheral: SPI0, signal: PCS5_PCSS, pin_signal: PTB23/SPI2_SIN/SPI0_PCS5/FB_AD28}
   - {pin_num: '77', peripheral: LLWU, signal: 'P, 9', pin_signal: PTC5/LLWU_P9/SPI0_SCK/LPTMR0_ALT2/I2S0_RXD0/FB_AD10/CMP0_OUT/FTM0_CH2}
   - {pin_num: '57', peripheral: GPIOB, signal: 'GPIO, 9', pin_signal: PTB9/SPI1_PCS1/UART3_CTS_b/FB_AD20}
+  - {pin_num: '36', peripheral: GPIOA, signal: 'GPIO, 2', pin_signal: PTA2/UART0_TX/FTM0_CH7/JTAG_TDO/TRACE_SWO/EZP_DO}
+  - {pin_num: '90', peripheral: GPIOC, signal: 'GPIO, 16', pin_signal: PTC16/UART3_RX/ENET0_1588_TMR0/FB_CS5_b/FB_TSIZ1/FB_BE23_16_BLS15_8_b}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -94,6 +96,9 @@ void BOARD_InitPins(void)
     CLOCK_EnableClock(kCLOCK_PortD);
     /* Port E Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortE);
+
+    /* PORTA2 (pin 36) is configured as PTA2 */
+    PORT_SetPinMux(PORTA, 2U, kPORT_MuxAsGpio);
 
     /* PORTA4 (pin 38) is configured as PTA4 */
     PORT_SetPinMux(BOARD_INITPINS_SW3_PORT, BOARD_INITPINS_SW3_PIN, kPORT_MuxAsGpio);
@@ -121,6 +126,9 @@ void BOARD_InitPins(void)
 
     /* PORTC1 (pin 71) is configured as PTC1 */
     PORT_SetPinMux(PORTC, 1U, kPORT_MuxAsGpio);
+
+    /* PORTC16 (pin 90) is configured as PTC16 */
+    PORT_SetPinMux(BOARD_INITPINS_TMR_1588_0_PORT, BOARD_INITPINS_TMR_1588_0_PIN, kPORT_MuxAsGpio);
 
     /* PORTC2 (pin 72) is configured as PTC2 */
     PORT_SetPinMux(PORTC, 2U, kPORT_MuxAsGpio);

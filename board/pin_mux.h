@@ -108,6 +108,13 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_CMP0_IN1_PIN 7U     /*!<@brief PORTC pin index: 7 */
                                            /* @} */
 
+/*! @name PORTC16 (number 90), J1[2]
+  @{ */
+#define BOARD_INITPINS_TMR_1588_0_GPIO GPIOC /*!<@brief GPIO device name: GPIOC */
+#define BOARD_INITPINS_TMR_1588_0_PORT PORTC /*!<@brief PORT device name: PORTC */
+#define BOARD_INITPINS_TMR_1588_0_PIN 16U    /*!<@brief PORTC pin index: 16 */
+                                             /* @} */
+
 /*!
  * @brief Configures pin routing and optionally pin electrical features.
  *
