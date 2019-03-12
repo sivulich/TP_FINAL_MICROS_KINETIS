@@ -73,7 +73,7 @@ int main(void)
 	GPIO_PinInit(GPIOC,16, &config);
 
 
-	float in[500];
+	/*float in[500];
 	q15_t i[500];
 	for(int i = 0; i < 500; i++)
 	{
@@ -95,7 +95,7 @@ int main(void)
 	varState[0] = varState[1] = varState[2] = varState[3] = 0;
 	arm_biquad_casd_df1_inst_q15 f;
 	arm_biquad_cascade_df1_init_q15(&f,1,coeff,varState,1);
-	arm_biquad_cascade_df1_q15(&f,i,out,500);
+	arm_biquad_cascade_df1_q15(&f,i,out,500);*/
 
 	while (1)
 	{
