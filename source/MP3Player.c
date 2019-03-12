@@ -13,7 +13,7 @@
 #include "LEDDisplay.h"
 #include "MP3PlayerData.h"
 #include <string.h>
-#include "fsl_debug_console.h"
+//#include "fsl_debug_console.h"
 
 /*******************************************************************************
  * Definitions
@@ -219,7 +219,10 @@ static void update()
 						len=0;
 					}
 					else if(ret<0)
-						PRINTF("ERROR DECODING %d\n",ret);
+					{
+						//Hacer algo de verdad con los errores
+					}
+						//PRINTF("ERROR DECODING %d\n",ret);
 					else if(ret  == 0)
 					{
 						//Termino de reproducirse la cancion actual

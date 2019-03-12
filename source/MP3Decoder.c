@@ -6,7 +6,7 @@
  */
 #include "MP3Decoder.h"
 #include "ff.h"
-#include "fsl_debug_console.h"
+//#include "fsl_debug_console.h"
 #include "ID3V1/read_id3.h"
 #include <stdlib.h>
 #include <string.h>
@@ -26,7 +26,7 @@ static UINT br;
 static int headerSize;
 
 
-
+/*
 static void printInfo(MP3FrameInfo info)
 {
 	PRINTF("\nDecoded a frame with:\nBitrate: %d\nBitsPerSample: %d\nLayer: %d\nNchans: %d\nOutSamp: %d\nSampRate: %d\nVersion: %d\n",
@@ -38,7 +38,7 @@ static void printInfo(MP3FrameInfo info)
 		info.samprate,
 		info.version
 	);
-}
+}*/
 
 int onFile()
 {
@@ -90,7 +90,7 @@ unsigned char* getMP3Info(const char* tag,int* size)
 		{
 			read_ID3_info	(
 							 TITLE_ID3,
-							 id3v1Tit,
+							 (char*)id3v1Tit,
 							 256,
 							 &fp
 							 );
@@ -100,14 +100,14 @@ unsigned char* getMP3Info(const char* tag,int* size)
 		{
 			read_ID3_info	(
 							 ARTIST_ID3,
-							 id3v1Artist,
+							 (char*)id3v1Artist,
 							 256,
 							 &fp
 						 	 );
 			return id3v1Artist;
 		}
 	}
-
+	return NULL;
 }
 
 static void unloadFile()
@@ -180,7 +180,7 @@ static int loadFile(const char* fileName)
 
 	if (fp.err)
 	{
-		PRINTF("Couldnt open file\nPress any key to exit\n");
+		//PRINTF("Couldnt open file\nPress any key to exit\n");
 		return -1;
 	}
 	loadedFile=1;

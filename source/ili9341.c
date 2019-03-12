@@ -9,7 +9,7 @@
 #include "ili9341.h"
 #include "SPI_handler.h"
 #include "fsl_device_registers.h"
-#include "fsl_debug_console.h"
+//#include "fsl_debug_console.h"
 #include "fsl_sdmmc_event.h"
 #include "../lvgl/lvgl.h"
 #include "fsl_gpio.h"

@@ -35,7 +35,6 @@ static int stop();
 
 static int setUp=0,pauseState=0,buffQnt;
 static unsigned short** buffsL, **buffsR;
-static unsigned short monoBuffer[1152];
 static volatile unsigned buffLen,freq,currPos,currBuff;
 static volatile int informed=0,setDac=0;
 

@@ -12,6 +12,8 @@ typedef struct MP3Equalizer_ MP3Equalizer_;
 
 extern MP3Equalizer_ MP3Equalizer;
 
+
+
 struct MP3Equalizer_{
 	void (*init)(int fs);
 

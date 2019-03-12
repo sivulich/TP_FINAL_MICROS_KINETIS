@@ -59,15 +59,15 @@ void equalize(unsigned short* input,unsigned short* output, int len, int dir)
 	//float outputTemp[1152];
 	if(dir == 0)
 	{
-		arm_biquad_cascade_df1_q15(filterL,input,output,len);
-		arm_biquad_cascade_df1_q15(filterL+1,output,input,len);
-		arm_biquad_cascade_df1_q15(filterL+2,input,output,len);
+		arm_biquad_cascade_df1_q15(filterL,(q15_t*)input,(q15_t*)output,len);
+		arm_biquad_cascade_df1_q15(filterL+1,(q15_t*)output,(q15_t*)input,len);
+		arm_biquad_cascade_df1_q15(filterL+2,(q15_t*)input,(q15_t*)output,len);
 	}
 	else
 	{
-		arm_biquad_cascade_df1_q15(filterR,input,output,len);
-		arm_biquad_cascade_df1_q15(filterR+1,output,input,len);
-		arm_biquad_cascade_df1_q15(filterR+2,input,output,len);
+		arm_biquad_cascade_df1_q15(filterR,(q15_t*)input,(q15_t*)output,len);
+		arm_biquad_cascade_df1_q15(filterR+1,(q15_t*)output,(q15_t*)input,len);
+		arm_biquad_cascade_df1_q15(filterR+2,(q15_t*)input,(q15_t*)output,len);
 	}
 	//for(int i=0;i<1152;i++)
 	//{
@@ -124,7 +124,7 @@ filter_t calcCoeffs(float f, float g, float q)
 {
 	filter_t filter;
 	float A, omega, cs, sn, alpha;
-	A = pow(10, g / 20.0f);
+	A = pow(10, (g-EQ_MAX_DB) / 20.0f);
 	omega = (2 * M_PI * f) / fs;
 	sn = sin(omega);
 	cs = cos(omega);

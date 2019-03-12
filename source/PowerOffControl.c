@@ -8,7 +8,7 @@
 #include "fsl_pmc.h"
 #include "fsl_smc.h"
 #include "fsl_llwu.h"
-#include "fsl_debug_console.h"	//Just for debug
+//#include "fsl_debug_console.h"	//Just for debug
 #include "fsl_gpio.h"
 
 static void recover()
@@ -37,7 +37,7 @@ static void powerOff()
 	SMC_PreEnterStopModes();
 	SMC_SetPowerModeVlls(SMC,&config);
 	SMC_PostExitStopModes();
-	PRINTF("Si estas leyendo esto no me dormi un carajo. =)\n");
+	//PRINTF("Si estas leyendo esto no me dormi un carajo. =)\n");
 }
 
 POWEROFF_ POWEROFF = { .recover = recover, .powerOff = powerOff};

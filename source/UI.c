@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "fsl_debug_console.h"
+//#include "fsl_debug_console.h"
 #include "ff.h"
 #include "diskio.h"
 #include "fsl_sd_disk.h"
@@ -51,7 +51,7 @@ static status_t sdcardWaitCardInsert(void)
 	/* SD host init function */
 	if (SD_HostInit(&g_sd) != kStatus_Success)
 	{
-		PRINTF("\r\nSD host init fail\r\n");
+		//PRINTF("\r\nSD host init fail\r\n");
 		return kStatus_Fail;
 	}
 	/* power off card */
@@ -159,7 +159,7 @@ static unsigned init() {
 	{
 		if (f_mount(&g_fileSystem, driverNumberBuffer, 0U))
 		{
-			PRINTF("Mount volume failed.\r\n");
+			//PRINTF("Mount volume failed.\r\n");
 			ini=0;
 			return 0;
 		}
@@ -168,7 +168,7 @@ static unsigned init() {
 			error = f_chdrive((char const *)&driverNumberBuffer[0U]);
 			if (error)
 			{
-				PRINTF("Change drive failed.\r\n");
+				//PRINTF("Change drive failed.\r\n");
 				ini=0;
 				return 0;
 			}
@@ -259,7 +259,7 @@ static char input(char cmd) {
 					f_opendir(&temp,selectedPath);
 					while(f_readdir(&temp,&itemp)==FR_OK && itemp.fname[0]!=0)
 						selectedQnt++;
-					PRINTF("Selected file is: %s\n its index is: %d\n and its path is: %s\n\n",current[i],selectedIndex,selectedPath);
+					//PRINTF("Selected file is: %s\n its index is: %d\n and its path is: %s\n\n",current[i],selectedIndex,selectedPath);
 				}
 				else
 				{

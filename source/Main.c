@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "fsl_sd.h"
-#include "fsl_debug_console.h"
+//#include "fsl_debug_console.h"
 #include "board.h"
 
 #include "pin_mux.h"
@@ -38,7 +38,7 @@ int main(void)
 	/*Inicialización de la placa*/
     BOARD_InitPins();
     BOARD_BootClockRUN();
-    BOARD_InitDebugConsole();
+ //   BOARD_InitDebugConsole();
 
 	/*inicialización de littlevgl*/
 	lv_init();
@@ -107,6 +107,6 @@ int main(void)
 		GPIO_PinWrite(GPIOC,16,0);
 	}
 
-	printf("Thanks for using MP3\n");
-	GETCHAR();
+	//printf("Thanks for using MP3\n");
+	//GETCHAR();
 }

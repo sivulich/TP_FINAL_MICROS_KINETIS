@@ -1,5 +1,5 @@
 #include "fsl_device_registers.h"
-#include "fsl_debug_console.h"
+//#include "fsl_debug_console.h"
 #include "fsl_dspi.h"
 #include "board.h"
 #include "fsl_dspi_edma.h"
@@ -74,7 +74,7 @@ void DSPI_MasterUserCallback(SPI_Type *base, dspi_master_edma_handle_t *handle, 
     if(messageLen>32000)
     {
     	while(g_dspi_edma_m_handle.state==kDSPI_Busy);
-    	masterXfer.txData = messageData;
+    	masterXfer.txData =(uint8_t*) messageData;
     	masterXfer.dataSize = 32000;
         masterXfer.rxData = NULL;
         masterXfer.configFlags = kDSPI_MasterCtar0 |  (chipSelect << DSPI_MASTER_PCS_SHIFT) | kDSPI_MasterPcsContinuous;
@@ -84,8 +84,8 @@ void DSPI_MasterUserCallback(SPI_Type *base, dspi_master_edma_handle_t *handle, 
     }
     else if(messageLen>0)
     {
-    	while(g_dspi_edma_m_handle.state==kDSPI_Busy);
-		masterXfer.txData = messageData;
+    	while(g_dspi_edma_m_handle.state==kDSPI_Busy){};
+		masterXfer.txData = (uint8_t*)messageData;
 		masterXfer.dataSize = messageLen;
 		masterXfer.rxData = NULL;
 		masterXfer.configFlags = kDSPI_MasterCtar0 |  (chipSelect << DSPI_MASTER_PCS_SHIFT) | kDSPI_MasterPcsContinuous;
@@ -210,7 +210,8 @@ void SPI_Write_DMA(uint8_t* data , unsigned len,unsigned cs)
 	status_t ret = DSPI_MasterTransferEDMA(EXAMPLE_DSPI_MASTER_BASEADDR, &g_dspi_edma_m_handle, &masterXfer);
 	isTransferCompleted = false;
 	if (kStatus_Success != ret )
-		PRINTF("There is error when start DSPI_MasterTransferEDMA \r\n ");
+		while(1);//Assert on Error, wait for reset
+		//PRINTF("There is error when start DSPI_MasterTransferEDMA \r\n ");
 	//while(isTransferCompleted == false)
 	//while(g_dspi_edma_m_handle.state==kDSPI_Busy);
 }
@@ -237,6 +238,7 @@ void SPI_Write_Blocking(uint8_t* data , unsigned len,unsigned cs)
 	status_t ret = DSPI_MasterTransferBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &masterXfer);
 	isTransferCompleted = true;
 	if (kStatus_Success != ret )
-		PRINTF("There is error when start DSPI_MasterTransferEDMA \r\n ");
+		while(1); //Assert on error wait for reset
+		//PRINTF("There is error when start DSPI_MasterTransferEDMA \r\n ");
 }
 

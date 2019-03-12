@@ -4,6 +4,7 @@
 #include "MP3Player.h"
 #include "MP3Equalizer.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 static lv_res_t fileScreenUpdate(lv_obj_t* obj);
 /*Screens*/
@@ -293,18 +294,23 @@ static lv_obj_t* createRoller(const char* name, lv_coord_t x, lv_coord_t y, lv_c
 	lv_label_set_align(bassLabel, LV_LABEL_ALIGN_CENTER);
 	lv_obj_set_width(bassLabel, w);
 	lv_label_set_static_text(bassLabel, name);
-	
-	lv_roller_set_options(bassRoller, "-6dB\n"
-		"-3dB\n"
-		"0dB\n"
-		"3dB\n"
-		"6dB\n");
+	char str[200]="";
+	for(int i=-EQ_MAX_DB;i<=EQ_MAX_DB;i+=EQ_STEP_DB)
+	{
+		char strTemp[20];
+		if(i+EQ_STEP_DB<=EQ_MAX_DB)
+			sprintf(strTemp,"%d dB\n",i);
+		else
+			sprintf(strTemp,"%d dB",i);
+		strcat(str,strTemp);
+	}
+	lv_roller_set_options(bassRoller, str);
 	lv_roller_set_hor_fit(bassRoller, false);
 	lv_obj_set_pos(bassRoller, x, y);
 	lv_obj_set_width(bassRoller, w);
 	//lv_obj_set_height(bassRoller, h);
 	lv_roller_set_visible_row_count(bassRoller, 3);
-	lv_roller_set_selected(bassRoller, 2, false);
+	lv_roller_set_selected(bassRoller, EQ_MAX_DB, false);
 	lv_obj_align(bassLabel, bassRoller, LV_ALIGN_OUT_TOP_MID, 0,0);
 	lv_roller_set_style(bassRoller, LV_ROLLER_STYLE_BG, &style_btn_rel);
 	lv_roller_set_style(bassRoller, LV_ROLLER_STYLE_SEL, &style_btn_pr);
@@ -332,7 +338,10 @@ static lv_res_t EqualizerScreenCB(lv_obj_t* r)
 	int gains[EQ_BANDS];
 	for(int i = 0; i < EQ_BANDS; i++)
 	{
-		gains[i] = (lv_roller_get_selected(rollers[i])-2) * 3;
+		char dbs[10];
+		lv_roller_get_selected_str(rollers[i],dbs);
+		dbs[strlen(dbs)-3]=0;
+		gains[i] = atoi(dbs);
 	}
 	MP3Equalizer.setGains(gains);
 	return LV_RES_OK;

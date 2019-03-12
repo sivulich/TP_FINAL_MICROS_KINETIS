@@ -10,6 +10,8 @@
 
 #define MAX_VOLUME 	30
 #define EQ_BANDS	3
+#define EQ_MAX_DB 6
+#define EQ_STEP_DB 1
 
 typedef struct MP3PlayerData_ MP3PlayerData_;
 
