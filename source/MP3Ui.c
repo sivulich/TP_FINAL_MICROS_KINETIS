@@ -335,15 +335,15 @@ static  lv_obj_t* BackButtonCreate(lv_obj_t* p, lv_res_t (*fn)(lv_obj_t* obj))
 
 static lv_res_t EqualizerScreenCB(lv_obj_t* r)
 {
-	int gains[EQ_BANDS];
+	//int gains[EQ_BANDS];
 	for(int i = 0; i < EQ_BANDS; i++)
 	{
 		char dbs[10];
 		lv_roller_get_selected_str(rollers[i],dbs);
 		dbs[strlen(dbs)-3]=0;
-		gains[i] = atoi(dbs);
+		MP3PlayerData.equalizeBands[i] = atoi(dbs);
 	}
-	MP3Equalizer.setGains(gains);
+	MP3Equalizer.setGains(MP3PlayerData.equalizeBands);
 	return LV_RES_OK;
 }
 

@@ -85,6 +85,8 @@ static int init()
 	MP3DEC.init();
 	SigGen.init();
 	LEDDisplay.init();
+	for(int i = 0; i < EQ_BANDS; i++)
+		MP3PlayerData.equalizeBands[i]=0;
 	return 0;
 }
 static void fillBuffs(short* decodeOut,unsigned short* buffL,unsigned short* buffR,int buffLen)
@@ -95,17 +97,17 @@ static void fillBuffs(short* decodeOut,unsigned short* buffL,unsigned short* buf
 		for(int j=0;j<buffLen/2;j++)
 		{
 			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
-			unsigned temp=(((((int)decodeOut[2*j] + 32768))>>4))/6;
+			unsigned temp=(((((int)decodeOut[2*j] + 32768))>>4))/2;
 			temp*=volumeMap[MP3PlayerData.volume];
-			temp>>=12;
+			temp>>=9;
 			tempL[j] = temp;//(float)decodeOut[2*j]*1.0/32768/20;
 			//buffL[j] = temp;
 
 			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
 
-			temp=(((((int)decodeOut[2*j+1] + 32768))>>4))/6;
+			temp=(((((int)decodeOut[2*j+1] + 32768))>>4))/2;
 			temp*=volumeMap[MP3PlayerData.volume];
-			temp>>=12;
+			temp>>=9;
 			tempR[j]=temp;//(float)decodeOut[2*j+1]*1.0/32768/20;
 			//buffR[j] = temp;
 			//POR AHORA
