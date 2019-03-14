@@ -13,6 +13,10 @@
 #include "LEDDisplay.h"
 #include "MP3PlayerData.h"
 #include <string.h>
+#include <stdlib.h>
+#define ARM_MATH_CM4 1
+#include "arm_math.h"
+#include "arm_const_structs.h"
 //#include "fsl_debug_console.h"
 
 /*******************************************************************************
@@ -91,30 +95,54 @@ static int init()
 }
 static void fillBuffs(short* decodeOut,unsigned short* buffL,unsigned short* buffR,int buffLen)
 {
-	unsigned short tempL[1152],tempR[1152];
+	q15_t tempL[1152],tempR[1152];
 	if(buffLen > 1152)
 	{
 		for(int j=0;j<buffLen/2;j++)
 		{
 			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
-			unsigned temp=(((((int)decodeOut[2*j] + 32768))>>4))/2;
-			temp*=volumeMap[MP3PlayerData.volume];
-			temp>>=9;
-			tempL[j] = temp;//(float)decodeOut[2*j]*1.0/32768/20;
+			//unsigned temp=(((((int)decodeOut[2*j] + 32768))>>4))/2;
+			//temp*=volumeMap[MP3PlayerData.volume];
+			//temp>>=9;
+			tempL[j] = (decodeOut[2*j]/2+(1<<14))>>3;//(float)decodeOut[2*j]*1.0/32768/20;
 			//buffL[j] = temp;
 
 			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
 
-			temp=(((((int)decodeOut[2*j+1] + 32768))>>4))/2;
-			temp*=volumeMap[MP3PlayerData.volume];
-			temp>>=9;
-			tempR[j]=temp;//(float)decodeOut[2*j+1]*1.0/32768/20;
+			//temp=(((((int)decodeOut[2*j+1] + 32768))>>4))/2;
+			//temp*=volumeMap[MP3PlayerData.volume];
+			//temp>>=9;
+			tempR[j]=(decodeOut[2*j+1]/2+(1<<14))>>3;//(float)decodeOut[2*j+1]*1.0/32768/20;
 			//buffR[j] = temp;
 			//POR AHORA
-			tempL[j] = tempL[j]/2 + tempR[j]/2;
+			//tempL[j] = tempL[j]/2 + tempR[j]/2;
 		}
 		MP3Equalizer.equalize(tempL,buffL,1152,0);
 		MP3Equalizer.equalize(tempR,buffR,1152,1);
+		for(int j=0;j<buffLen/2;j++)
+		{
+			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
+			if(buffL[j]&(1<<15))
+				buffL[j]=0;
+			else if(buffL[j]>=1<<12)
+				buffL[j]=(1<<12)-1;
+			unsigned temp=((((unsigned)buffL[j])));
+			temp*=volumeMap[MP3PlayerData.volume];
+			temp>>=13;
+			buffL[j] = temp;
+
+			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
+			if(buffR[j]&(1<<15))
+				buffR[j]=0;
+			else if(buffR[j]>=1<<12)
+				buffR[j]=(1<<12)-1;
+			temp=(((((unsigned)buffR[j]))));
+			temp*=volumeMap[MP3PlayerData.volume];
+			temp>>=13;
+			buffR[j] = temp;
+			//POR AHORA
+			buffL[j] = buffL[j]/2 + buffR[j]/2;
+		}
 	}
 	else
 	{
@@ -291,7 +319,7 @@ static void update()
 			MP3DEC.unloadFile();
 			SigGen.stop();
 			char nextFile[256];
-			if((MP3PlayerData.offset == -1) && (pos >= (dur/2)))
+			if((MP3PlayerData.offset == -1) && (pos >= 3000))
 			{
 				getMP3AdjFile(0,nextFile);
 			}

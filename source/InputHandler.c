@@ -91,7 +91,7 @@ bool InputHandlerRead(lv_indev_data_t * data)
 			MP3PlayerData.currentScreen==FILE_SCREEN1||
 			MP3PlayerData.currentScreen==FILE_SCREEN0 )
 		{
-			offsetPressed = -1;
+			offsetPressed = 1;
 		}
 		else
 		{
