@@ -27,13 +27,11 @@ static lv_disp_drv_t disp;
 
 /*******************************************************************************/
 
-#define ARM_MATH_CM4	1
-#include "arm_math.h"
-#define F2Q15(x)  ((q15_t)((float32_t)x * 16384UL))
 int main(void)
 {
 
 	POWEROFF.recover();
+	POWEROFF.init();
 
 	/*Inicialización de la placa*/
     BOARD_InitPins();
@@ -60,7 +58,7 @@ int main(void)
 	kb_indev = lv_indev_drv_register(&kb_drv);
 
 	/*Creamos la interfaz de usuario*/
-	MP3UiCreate(&kb_drv);
+	MP3UI.init(&kb_drv);
 
 	/*Creamos el reproductor*/
 	MP3Player.init();
@@ -102,6 +100,7 @@ int main(void)
 		GPIO_PinWrite(GPIOA,2,1);
 		MP3Player.update();
 		GPIO_PinWrite(GPIOA,2,0);
+		MP3UI.update();
 		GPIO_PinWrite(GPIOC,16,1);
 		lv_task_handler();
 		GPIO_PinWrite(GPIOC,16,0);

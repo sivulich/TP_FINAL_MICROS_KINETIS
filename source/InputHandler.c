@@ -54,11 +54,6 @@ void InputHandlerInit()
 	GPIO_PinInit(ENTER_GPIO, &config);     //Enter
 	//GPIO_PinInit(A_GPIO, &config);		//A
 	//GPIO_PinInit(B_GPIO, &config);		//B
-
-	config.pinDirection = kGPIO_DigitalOutput;
-	config.outputLogic = 1;
-	GPIO_PinInit(SCREEN_GPIO, &config);
-	GPIO_PinWrite(SCREEN_GPIO,1);
 }
 static int lastEnc = 0b11, newEnc, storeEnc = 0b11, cnt = 0, lastEncCnt = 0;
 static unsigned long long pwrDownCnt = 0;

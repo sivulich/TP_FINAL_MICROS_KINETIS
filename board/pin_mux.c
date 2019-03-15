@@ -74,6 +74,8 @@ BOARD_InitPins:
   - {pin_num: '57', peripheral: GPIOB, signal: 'GPIO, 9', pin_signal: PTB9/SPI1_PCS1/UART3_CTS_b/FB_AD20}
   - {pin_num: '36', peripheral: GPIOA, signal: 'GPIO, 2', pin_signal: PTA2/UART0_TX/FTM0_CH7/JTAG_TDO/TRACE_SWO/EZP_DO}
   - {pin_num: '90', peripheral: GPIOC, signal: 'GPIO, 16', pin_signal: PTC16/UART3_RX/ENET0_1588_TMR0/FB_CS5_b/FB_TSIZ1/FB_BE23_16_BLS15_8_b}
+  - {pin_num: '31', peripheral: GPIOE, signal: 'GPIO, 24', pin_signal: ADC0_SE17/PTE24/UART4_TX/I2C0_SCL/EWM_OUT_b}
+  - {pin_num: '32', peripheral: GPIOE, signal: 'GPIO, 25', pin_signal: ADC0_SE18/PTE25/UART4_RX/I2C0_SDA/EWM_IN}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -213,6 +215,12 @@ void BOARD_InitPins(void)
                                           kPORT_UnlockRegister};
     /* PORTE2 (pin 3) is configured as SDHC0_DCLK */
     PORT_SetPinConfig(BOARD_INITPINS_SDHC0_DCLK_PORT, BOARD_INITPINS_SDHC0_DCLK_PIN, &SDHC0_DCLK);
+
+    /* PORTE24 (pin 31) is configured as PTE24 */
+    PORT_SetPinMux(BOARD_INITPINS_ACCEL_SCL_PORT, BOARD_INITPINS_ACCEL_SCL_PIN, kPORT_MuxAsGpio);
+
+    /* PORTE25 (pin 32) is configured as PTE25 */
+    PORT_SetPinMux(BOARD_INITPINS_ACCEL_SDA_PORT, BOARD_INITPINS_ACCEL_SDA_PIN, kPORT_MuxAsGpio);
 
     const port_pin_config_t SDHC0_CMD = {/* Internal pull-up resistor is enabled */
                                          kPORT_PullUp,

@@ -11,8 +11,6 @@
 
 #include <stdlib.h>
 
-#define F2Q15(x)  ( (q15_t)((float32_t)x * 16384UL ) )
-
 #define M_PI 3.1415926535897932384626433832795
 #define FILTER_COEFFS		6
 #define FILTER_STATE_VARS	4
@@ -25,8 +23,6 @@ typedef struct
 	q15_t varState[FILTER_STATE_VARS * FILTER_STAGES];//x_1, x_2, y_1, y_2;
 }filter_t;
 
-//static q15_t stateVarL[4];
-//static q15_t stateVarR[4];
 float equalizerCoeffs[2*EQ_MAX_DB/EQ_STEP_DB+1][EQ_BANDS][FILTER_COEFFS*FILTER_STAGES]=
 {{{0.500000,0.000000,-0.965247,0.469577,0.920261,-0.429433,0.500000,0.000000,-0.984162,0.485172,0.983325,-0.483781,0.081832,0.000000,0.163664,0.081832,0.316046,-0.183314},{0.500000,0.000000,-0.878360,0.415459,0.749502,-0.320543,0.500000,0.000000,-0.947234,0.456492,0.947655,-0.451878,0.081832,0.000000,0.163664,0.081832,0.316046,-0.183314},{0.500000,0.000000,-0.571515,0.308354,0.299778,-0.172340,0.500000,0.000000,-0.821082,0.387271,0.846534,-0.376430,0.081832,0.000000,0.163664,0.081832,0.316046,-0.183314},},
 {{0.500000,0.000000,-0.962847,0.467372,0.920261,-0.429433,0.500000,0.000000,-0.983824,0.484788,0.983325,-0.483781,0.081832,0.000000,0.163664,0.081832,0.316046,-0.183314},{0.500000,0.000000,-0.871226,0.409777,0.749502,-0.320543,0.500000,0.000000,-0.946523,0.455360,0.947655,-0.451878,0.081832,0.000000,0.163664,0.081832,0.316046,-0.183314},{0.500000,0.000000,-0.554683,0.298013,0.299778,-0.172340,0.500000,0.000000,-0.821453,0.384519,0.846534,-0.376430,0.081832,0.000000,0.163664,0.081832,0.316046,-0.183314},},
@@ -61,25 +57,9 @@ void setGains(int* gains)
 	{
 		//q15_t lastVars[4];
 		filterBandsL[i] = calcCoeffs(freqBands[i], gains[i], qFactor[i]);
-		/*lastVars[0]=filterBandsL[i].varState[0];
-		lastVars[1]=filterBandsL[i].varState[1];
-		lastVars[2]=filterBandsL[i].varState[2];
-		lastVars[3]=filterBandsL[i].varState[3];*/
-		arm_biquad_cascade_df1_init_q15(filterL+i,FILTER_STAGES-FILTER_REM_LP,filterBandsL[i].coeff,filterBandsL[i].varState,1);
-		/*filterBandsL[i].varState[0]=lastVars[0];
-		filterBandsL[i].varState[1]=lastVars[1];
-		filterBandsL[i].varState[2]=lastVars[2];
-		filterBandsL[i].varState[3]=lastVars[3];*/
 		filterBandsR[i] = filterBandsL[i];
-		/*lastVars[0]=filterBandsR[i].varState[0];
-		lastVars[1]=filterBandsR[i].varState[1];
-		lastVars[2]=filterBandsR[i].varState[2];
-		lastVars[3]=filterBandsR[i].varState[3];*/
+		arm_biquad_cascade_df1_init_q15(filterL+i,FILTER_STAGES-FILTER_REM_LP,filterBandsL[i].coeff,filterBandsL[i].varState,1);
 		arm_biquad_cascade_df1_init_q15(filterR+i,FILTER_STAGES-FILTER_REM_LP,filterBandsR[i].coeff,filterBandsR[i].varState,1);
-		/*filterBandsR[i].varState[0]=lastVars[0];
-		filterBandsR[i].varState[1]=lastVars[1];
-		filterBandsR[i].varState[2]=lastVars[2];
-		filterBandsR[i].varState[3]=lastVars[3];*/
 	}
 }
 
@@ -91,29 +71,18 @@ void init(int fsample)
 
 void equalize(q15_t* input,unsigned short* output, int len, int dir)
 {
-	//float outputTemp[1152];
 	if(dir == 0)
 	{
 		arm_biquad_cascade_df1_q15(filterL,(q15_t*)input,(q15_t*)output,len);
-		//arm_biquad_cascade_df1_q15(filterL,(q15_t*)output,(q15_t*)input,len);
 		arm_biquad_cascade_df1_q15(filterL+1,(q15_t*)output,(q15_t*)input,len);
-		//arm_biquad_cascade_df1_q15(filterL+1,(q15_t*)output,(q15_t*)input,len);
 		arm_biquad_cascade_df1_q15(filterL+2,(q15_t*)input,(q15_t*)output,len);
-		//arm_biquad_cascade_df1_q15(filterL+2,(q15_t*)output,(q15_t*)input,len);
 	}
 	else
 	{
 		arm_biquad_cascade_df1_q15(filterR,(q15_t*)input,(q15_t*)output,len);
-		//arm_biquad_cascade_df1_q15(filterR,(q15_t*)output,(q15_t*)input,len);
 		arm_biquad_cascade_df1_q15(filterR+1,(q15_t*)output,(q15_t*)input,len);
-		//arm_biquad_cascade_df1_q15(filterR+1,(q15_t*)output,(q15_t*)input,len);
 		arm_biquad_cascade_df1_q15(filterR+2,(q15_t*)input,(q15_t*)output,len);
-		//arm_biquad_cascade_df1_q15(filterR+2,(q15_t*)output,(q15_t*)input,len);
 	}
-	//for(int i=0;i<1152;i++)
-	//{
-	//	output[i]=(outputTemp[i]);
-	//}
 }
 
 filter_t calcCoeffs(float f, float g, float q)
@@ -127,9 +96,6 @@ filter_t calcCoeffs(float f, float g, float q)
 
 	arm_float_to_q15(equalizerCoeffs[gain][band],filter.coeff,FILTER_COEFFS * FILTER_STAGES);
 
-
-
-	//filter.varState[0] = filter.varState[1] = filter.varState[2] = filter.varState[3] = 0;
 	return filter;
 }
 

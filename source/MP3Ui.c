@@ -3,6 +3,7 @@
 #include "MP3PlayerData.h"
 #include "MP3Player.h"
 #include "MP3Equalizer.h"
+#include "fsl_rtc.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -25,7 +26,7 @@ static lv_obj_t *eqBackBtn,*rollers[3];
 
 /*PlayScreen Info*/
 static unsigned duration,currentTime;
-static lv_obj_t* progressBar,*playBackBtn,*songNameLbl,*artistNameLbl,*volumeLabel,*eqGraph;
+static lv_obj_t* progressBar,*playBackBtn,*songNameLbl,*artistNameLbl,*volumeLabel,*eqGraph,*dateLabel;
 lv_chart_series_t * ser1;
 
 /*SettingsScreen Info*/
@@ -361,7 +362,15 @@ static void EqualizerScreenCreate(void)
 	eqBackBtn = BackButtonCreate(equalizerScreen, retMainScreen);
 }
 
-
+lv_res_t LoopModeCB(lv_obj_t * btn)
+{
+	if(MP3PlayerData.playMode)
+		lv_btn_set_state(btn, LV_BTN_STATE_TGL_PR);
+	else
+		lv_btn_set_state(btn, LV_BTN_STATE_TGL_REL);
+	MP3PlayerData.playMode ^= 1;
+	return LV_RES_OK;
+}
 
 static void SettingsScreenCreate(void)
 {
@@ -376,7 +385,7 @@ static void SettingsScreenCreate(void)
 	lv_btn_set_state(loopModeBtn, LV_BTN_STATE_TGL_REL);  /*Set toggled state*/
 	lv_obj_align(loopModeBtn,settingsScreen,LV_ALIGN_CENTER,0,0);
 
-	//lv_roller_set_action(loopModeBtn, EqualizerScreenCB);
+	lv_btn_set_action(loopModeBtn,LV_BTN_ACTION_CLICK, LoopModeCB);
 	label = lv_label_create(loopModeBtn, NULL);
 	lv_label_set_text(label, "Loop Mode Enable");
 
@@ -468,10 +477,14 @@ static void PlayScreenCreate(void)
 	lv_label_set_text(volumeLabel,SYMBOL_VOLUME_MAX" 30");
 	lv_obj_align(volumeLabel, NULL, LV_ALIGN_IN_TOP_RIGHT, -20, 0);
 
+	dateLabel = lv_label_create(playScreen,NULL);
+	lv_label_set_text(dateLabel,"dd/mm/aaaa hh:mm");
+	lv_obj_align(dateLabel,NULL,LV_ALIGN_IN_TOP_MID,0,0);
+
 	playBackBtn=BackButtonCreate(playScreen, retMainScreen);
 }
 
-void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,float* eqPoints)
+static void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,float* eqPoints)
 {
 	if (first == 1)
 	{
@@ -493,7 +506,7 @@ void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,fl
 	{
 		currentTime = dur;
 		lv_bar_set_value(progressBar, currentTime);
-		ser1->points[0] = eqPoints[0];
+		/*ser1->points[0] = eqPoints[0];
 		ser1->points[1] = eqPoints[1];
 		ser1->points[2] = eqPoints[2];
 		ser1->points[3] = eqPoints[3];
@@ -502,27 +515,11 @@ void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,fl
 		ser1->points[6] = eqPoints[6];
 		ser1->points[7] = eqPoints[7];
 
-		lv_chart_refresh(eqGraph);
-	}
-	if(MP3PlayerData.volume == 0)
-	{
-		lv_label_set_text(volumeLabel,SYMBOL_MUTE" 0");
-	}
-	else if(MP3PlayerData.volume<(MAX_VOLUME * 2.0 / 3.0))
-	{
-		char txt[8];
-		sprintf(txt,SYMBOL_VOLUME_MID" %d",MP3PlayerData.volume);
-		lv_label_set_text(volumeLabel,txt);
-	}
-	else
-	{
-		char txt[8];
-		sprintf(txt,SYMBOL_VOLUME_MAX" %d",MP3PlayerData.volume);
-		lv_label_set_text(volumeLabel,txt);
+		lv_chart_refresh(eqGraph);*/
 	}
 }
 
-void StylesInit()
+static void StylesInit()
 {
 	/*Background style*/
 	lv_style_copy(&style_bg, &lv_style_plain);
@@ -557,7 +554,8 @@ void StylesInit()
 	style_btn_pr.text.color = LV_COLOR_MAKE(0xbb, 0xd5, 0xf1);
 }
 
-void MP3UiCreate(lv_indev_drv_t* kb_dr)
+
+static void MP3UiCreate(lv_indev_drv_t* kb_dr)
 {
 	kb_drv = kb_dr;
 	kb_indev = lv_indev_drv_register(kb_drv);
@@ -570,9 +568,28 @@ void MP3UiCreate(lv_indev_drv_t* kb_dr)
 	SettingsScreenCreate();
 	lv_scr_load(mainScreen);
 	setActiveGroup(MAIN_SCREEN,4,mainBtns);
+	rtc_config_t rtcConf;
+	RTC_GetDefaultConfig(&rtcConf);
+	RTC_Init(RTC,&rtcConf);
+	RTC_SetClockSource(RTC);
+	/*rtc_datetime_t date;
+	date.year = 2019U;
+	date.month = 3U;
+	date.day = 14U;
+	date.hour = 19U;
+	date.minute = 48;
+	date.second = 30;*/
+
+	/* RTC time counter has to be stopped before setting the date & time in the TSR register */
+	RTC_StopTimer(RTC);
+
+	/* Set RTC time to default */
+	//RTC_SetDatetime(RTC, &date);
+	RTC_StartTimer(RTC);
+	MP3UI.update();
 }
 
-char* getMP3file()
+static char* getMP3file()
 {
 	char* ret = UI.getFile();
 	if(ret == (char*)-1)
@@ -588,10 +605,48 @@ char* getMP3file()
 
 }
 
-void getMP3AdjFile(int off,char* dest)
+static void getMP3AdjFile(int off,char* dest)
 {
 	UI.getAdjFile(off,dest);
 	while(checkMP3file(dest,strlen(dest))==0 && dest[0]!=0 && dest[0]!=(char)-1)
 		UI.getAdjFile(off,dest);
 }
 
+static int lastVolume=0;
+
+static void update()
+{
+	if(MP3PlayerData.currentScreen==PLAY_SCREEN && lastVolume!=MP3PlayerData.volume)
+	{
+		lastVolume=MP3PlayerData.volume;
+		if(MP3PlayerData.volume == 0)
+		{
+			lv_label_set_text(volumeLabel,SYMBOL_MUTE" 0");
+		}
+		else if(MP3PlayerData.volume<(MAX_VOLUME * 2.0 / 3.0))
+		{
+			char txt[8];
+			sprintf(txt,SYMBOL_VOLUME_MID" %d",MP3PlayerData.volume);
+			lv_label_set_text(volumeLabel,txt);
+		}
+		else
+		{
+			char txt[8];
+			sprintf(txt,SYMBOL_VOLUME_MAX" %d",MP3PlayerData.volume);
+			lv_label_set_text(volumeLabel,txt);
+		}
+
+	}
+	if(MP3PlayerData.currentScreen==PLAY_SCREEN)
+	{
+		rtc_datetime_t date;
+		char text[50];
+		RTC_GetDatetime(RTC,&date);
+		sprintf(text,"%02d/%02d/%d %02d:%02d",date.day,date.month,date.year,date.hour,date.minute);
+		lv_label_set_text(dateLabel,text);
+	}
+
+
+}
+
+MP3UI_ MP3UI = {.init=MP3UiCreate,.getMP3file=getMP3file,.getAdjFile=getMP3AdjFile,.setSongInfo=MP3UiSetSongInfo,.update=update};
