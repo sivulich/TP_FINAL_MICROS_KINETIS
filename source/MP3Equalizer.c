@@ -42,9 +42,9 @@ float equalizerCoeffs[2*EQ_MAX_DB/EQ_STEP_DB+1][EQ_BANDS][FILTER_COEFFS*FILTER_S
 
 static filter_t filterBandsL[EQ_BANDS];
 static filter_t filterBandsR[EQ_BANDS];
-static arm_biquad_casd_df1_inst_q15 filterL[EQ_BANDS];
-static arm_biquad_casd_df1_inst_q15 filterR[EQ_BANDS];
-
+static arm_biquad_casd_df1_inst_q15 filterL;//[EQ_BANDS];
+static arm_biquad_casd_df1_inst_q15 filterR;//[EQ_BANDS];
+static q15_t filterCoeffs[EQ_BANDS*FILTER_COEFFS*(FILTER_STAGES-FILTER_REM_LP)];
 static float freqBands[EQ_BANDS] = {134,774,4000};
 static float qFactor[EQ_BANDS] = {0.05,1,0.9};
 static int fs;
@@ -58,10 +58,17 @@ void setGains(int* gains)
 		//q15_t lastVars[4];
 		filterBandsL[i] = calcCoeffs(freqBands[i], gains[i], qFactor[i]);
 		filterBandsR[i] = filterBandsL[i];
-		arm_biquad_cascade_df1_init_q15(filterL+i,FILTER_STAGES-FILTER_REM_LP,filterBandsL[i].coeff,filterBandsL[i].varState,1);
-		arm_biquad_cascade_df1_init_q15(filterR+i,FILTER_STAGES-FILTER_REM_LP,filterBandsR[i].coeff,filterBandsR[i].varState,1);
+		for(int j=0;j<FILTER_COEFFS*(FILTER_STAGES-FILTER_REM_LP);j++)
+		{
+			filterCoeffs[i*FILTER_COEFFS*(FILTER_STAGES-FILTER_REM_LP)+j]=filterBandsL[i].coeff[j];
+		}
+		//arm_biquad_cascade_df1_init_q15(filterL+i,FILTER_STAGES-FILTER_REM_LP,filterBandsL[i].coeff,filterBandsL[i].varState,1);
+		//arm_biquad_cascade_df1_init_q15(filterR+i,FILTER_STAGES-FILTER_REM_LP,filterBandsR[i].coeff,filterBandsR[i].varState,1);
 	}
+	arm_biquad_cascade_df1_init_q15(&filterL,(FILTER_STAGES-FILTER_REM_LP)*EQ_BANDS,filterCoeffs,filterBandsL[0].varState,1);
+	arm_biquad_cascade_df1_init_q15(&filterR,(FILTER_STAGES-FILTER_REM_LP)*EQ_BANDS,filterCoeffs,filterBandsR[0].varState,1);
 }
+
 
 void init(int fsample)
 {
@@ -73,15 +80,15 @@ void equalize(q15_t* input,unsigned short* output, int len, int dir)
 {
 	if(dir == 0)
 	{
-		arm_biquad_cascade_df1_q15(filterL,(q15_t*)input,(q15_t*)output,len);
-		arm_biquad_cascade_df1_q15(filterL+1,(q15_t*)output,(q15_t*)input,len);
-		arm_biquad_cascade_df1_q15(filterL+2,(q15_t*)input,(q15_t*)output,len);
+		arm_biquad_cascade_df1_q15(&filterL,(q15_t*)input,(q15_t*)output,len);
+		//arm_biquad_cascade_df1_q15(filterL+1,(q15_t*)output,(q15_t*)input,len);
+		//arm_biquad_cascade_df1_q15(filterL+2,(q15_t*)input,(q15_t*)output,len);
 	}
 	else
 	{
-		arm_biquad_cascade_df1_q15(filterR,(q15_t*)input,(q15_t*)output,len);
-		arm_biquad_cascade_df1_q15(filterR+1,(q15_t*)output,(q15_t*)input,len);
-		arm_biquad_cascade_df1_q15(filterR+2,(q15_t*)input,(q15_t*)output,len);
+		arm_biquad_cascade_df1_q15(&filterR,(q15_t*)input,(q15_t*)output,len);
+		//arm_biquad_cascade_df1_q15(filterR+1,(q15_t*)output,(q15_t*)input,len);
+		//arm_biquad_cascade_df1_q15(filterR+2,(q15_t*)input,(q15_t*)output,len);
 	}
 }
 

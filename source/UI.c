@@ -34,7 +34,7 @@ static const sdmmchost_detect_card_t s_sdCardDetect = {
 #else
 	.cdType = BOARD_SD_DETECT_TYPE,
 #endif
-	.cdTimeOut_ms = 1,//(~0U),
+	.cdTimeOut_ms = 0,//(~0U),
 };
 
 static int pwrOn=0;
@@ -138,8 +138,11 @@ static void updateCurrent()
 		if(ini==2)
 		{
 			cnt=1;
-			strncpy(current[0], "Please Insert SD card. Press to Exit",MAX_FILE_NAME);
+			strncpy(current[0], "Please Insert SD card",MAX_FILE_NAME);
 			current[0][MAX_FILE_NAME]=4;
+			file[0]='.';
+			file[1]=0;
+			len=1;
 		}
 	}
 

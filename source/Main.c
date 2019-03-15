@@ -94,7 +94,7 @@ int main(void)
 	arm_biquad_casd_df1_inst_q15 f;
 	arm_biquad_cascade_df1_init_q15(&f,1,coeff,varState,1);
 	arm_biquad_cascade_df1_q15(&f,i,out,500);*/
-
+	unsigned long long calls=0;
 	while (1)
 	{
 		GPIO_PinWrite(GPIOA,2,1);
@@ -102,7 +102,9 @@ int main(void)
 		GPIO_PinWrite(GPIOA,2,0);
 		MP3UI.update();
 		GPIO_PinWrite(GPIOC,16,1);
-		lv_task_handler();
+		if(calls%2==1)
+			lv_task_handler();
+		calls++;
 		GPIO_PinWrite(GPIOC,16,0);
 	}
 
