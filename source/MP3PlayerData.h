@@ -13,6 +13,7 @@
 #define EQ_BANDS	3
 #define EQ_MAX_DB 6
 #define EQ_STEP_DB 1
+#define VUMETERS_MODES 6
 
 typedef struct MP3PlayerData_ MP3PlayerData_;
 
@@ -24,6 +25,7 @@ struct MP3PlayerData_{
 	int volume;
 	int currentScreen;
 	int playMode;
+	int vumeterMode;
 	int equalizeBands[EQ_BANDS];
 };
 

@@ -100,10 +100,13 @@ int main(void)
 		GPIO_PinWrite(GPIOA,2,1);
 		MP3Player.update();
 		GPIO_PinWrite(GPIOA,2,0);
-		MP3UI.update();
+
 		GPIO_PinWrite(GPIOC,16,1);
 		if(calls%2==1)
+		{
+			MP3UI.update();
 			lv_task_handler();
+		}
 		calls++;
 		GPIO_PinWrite(GPIOC,16,0);
 	}

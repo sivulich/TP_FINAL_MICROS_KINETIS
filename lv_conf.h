@@ -153,10 +153,10 @@
 #define USE_LV_FONT_DEJAVU_30_CYRILLIC     0
 #define USE_LV_FONT_SYMBOL_30              0
 
-#define USE_LV_FONT_DEJAVU_40              0
+#define USE_LV_FONT_DEJAVU_40              4
 #define USE_LV_FONT_DEJAVU_40_LATIN_SUP    0
 #define USE_LV_FONT_DEJAVU_40_CYRILLIC     0
-#define USE_LV_FONT_SYMBOL_40              0
+#define USE_LV_FONT_SYMBOL_40              4
 
 #define USE_LV_FONT_MONOSPACE_8            0
 

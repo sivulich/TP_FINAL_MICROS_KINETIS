@@ -247,7 +247,7 @@ static void update()
 						//Actualizo el vumetro analizador de espectro
 						pos+=len;
 						MP3FrameInfo finfo=MP3DEC.getFrameInfo();
-						LEDDisplay.setVumeter(decodeOut,finfo.outputSamps,1);
+						LEDDisplay.setVumeter(decodeOut,finfo.outputSamps,MP3PlayerData.vumeterMode);
 						MP3UI.setSongInfo(NULL,NULL,pos/1000,0,LEDDisplay.getEqualizer());
 						len=0;
 					}

@@ -59,7 +59,7 @@ static int lastEnc = 0b11, newEnc, storeEnc = 0b11, cnt = 0, lastEncCnt = 0;
 static unsigned long long pwrDownCnt = 0;
 static lv_indev_state_t encKey=LV_GROUP_KEY_ESC;
 
-static int playPressed=0, offsetPressed = 0;
+static int playPressed=0, offsetPressed = 0,changeModePressed=0;
 bool InputHandlerRead(lv_indev_data_t * data)
 {
 	newEnc=FTM_GetQuadDecoderCounterValue(FTM2);
@@ -103,17 +103,14 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		if(pwrDownCnt>=40)
 			POWEROFF.powerOff();
 	}
-	/*else if(GPIO_PinRead(GPIOA,4)==0)
+	else if(GPIO_PinRead(GPIOA,4)==0)
 	{
-		data->key = LV_GROUP_KEY_LEFT;
-		state=LV_INDEV_STATE_PR;
+		changeModePressed=-1;
 	}
 	else if(GPIO_PinRead(GPIOC,6)==0)
 	{
-		data->key=LV_GROUP_KEY_RIGHT;
-
-		state=LV_INDEV_STATE_PR;
-	}*/
+		changeModePressed=1;
+	}
 	else if(GPIO_PinRead(ENTER_GPIO)==0)
 	{
 		data->key=LV_GROUP_KEY_ENTER;
@@ -190,6 +187,11 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		{
 			MP3PlayerData.offset = offsetPressed;
 			offsetPressed = 0;
+		}
+		if(changeModePressed!=0)
+		{
+			MP3PlayerData.vumeterMode=(VUMETERS_MODES+MP3PlayerData.vumeterMode+changeModePressed)%VUMETERS_MODES;
+			changeModePressed=0;
 		}
 		if(encKey!=LV_GROUP_KEY_ESC && cnt<2)
 		{
