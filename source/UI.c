@@ -253,6 +253,7 @@ static char input(char cmd) {
 						if (file[k] == '/')
 						{
 							memcpy(selectedPath,file,k);
+							selectedPath[k]=0;
 							break;
 						}
 					}
