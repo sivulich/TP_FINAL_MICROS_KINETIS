@@ -81,14 +81,12 @@ void equalize(q15_t* input,unsigned short* output, int len, int dir)
 	if(dir == 0)
 	{
 		arm_biquad_cascade_df1_q15(&filterL,(q15_t*)input,(q15_t*)output,len);
-		//arm_biquad_cascade_df1_q15(filterL+1,(q15_t*)output,(q15_t*)input,len);
-		//arm_biquad_cascade_df1_q15(filterL+2,(q15_t*)input,(q15_t*)output,len);
+
 	}
 	else
 	{
 		arm_biquad_cascade_df1_q15(&filterR,(q15_t*)input,(q15_t*)output,len);
-		//arm_biquad_cascade_df1_q15(filterR+1,(q15_t*)output,(q15_t*)input,len);
-		//arm_biquad_cascade_df1_q15(filterR+2,(q15_t*)input,(q15_t*)output,len);
+
 	}
 }
 

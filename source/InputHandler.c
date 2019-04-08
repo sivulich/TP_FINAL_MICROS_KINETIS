@@ -211,3 +211,68 @@ bool InputHandlerRead(lv_indev_data_t * data)
 	data->state = state;
     return false;       /*No more data to read so return false*/
 }
+
+int tempEnconderDiff=0;
+bool encoder_read(lv_indev_data_t*data){
+	if(tempEnconderDiff!=0)
+	{
+		data->enc_diff=tempEnconderDiff;
+		tempEnconderDiff=0;
+		return false;
+	}
+	newEnc=FTM_GetQuadDecoderCounterValue(FTM2);
+	if(newEnc!=lastEnc && abs(newEnc-lastEnc)>=2)
+	{
+		if(lastEnc > (ENCODER_MAX_VAL+1)/2)
+		{
+			if( (newEnc > (lastEnc-(ENCODER_MAX_VAL+1)/2)) && newEnc<lastEnc)
+				tempEnconderDiff=1;
+			else
+				tempEnconderDiff=-1;
+		}
+		else
+		{
+			if( (newEnc < (lastEnc+(ENCODER_MAX_VAL+1)/2)) && newEnc>lastEnc)
+				tempEnconderDiff=-1;
+			else
+				tempEnconderDiff=1;
+		}
+		data->enc_diff=tempEnconderDiff;
+		lastEncCnt=0;
+		lastEnc = newEnc;
+	}
+
+	if(GPIO_PinRead(ENTER_GPIO)==0){
+		data->state = LV_INDEV_STATE_PR;
+	}
+	else if(GPIO_PinRead(BACKWARD_GPIO)==0)
+	{
+		offsetPressed = -1;
+	}
+	else if(GPIO_PinRead(FORWARD_GPIO)==0)
+	{
+		offsetPressed = 1;
+	}
+	else if(GPIO_PinRead(PLAY_GPIO)==0)
+	{
+		playPressed=1;
+		pwrDownCnt++;
+		if(pwrDownCnt>=40)
+			POWEROFF.powerOff();
+	}
+	else{
+		if(playPressed == 1)
+		{
+			MP3PlayerData.play^=1;
+			playPressed=0;
+		}
+		if(offsetPressed != 0)
+		{
+			MP3PlayerData.offset = offsetPressed;
+			offsetPressed = 0;
+		}
+		data->state = LV_INDEV_STATE_REL;
+	}
+
+	return false; /*No buffering so no more data read*/
+}

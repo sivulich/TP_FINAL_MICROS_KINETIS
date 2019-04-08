@@ -63,6 +63,7 @@ static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 	groups[p] = lv_group_create();
 	for(int i=0;i<qnt;i++)
 		lv_group_add_obj(groups[p], ob[i]);
+	lv_indev_set_group(kb_indev, groups[p]);
 	for (int i = 0; i < SCREENS; i++)
 		if (groups[i] != 0)
 		{
@@ -70,10 +71,6 @@ static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 			{
 				lv_group_del(groups[i]);
 				groups[i] = 0;
-			}
-			else
-			{
-				lv_indev_set_group(kb_indev, groups[i]);
 			}
 		}
 			
@@ -107,6 +104,7 @@ static lv_res_t btn_action(lv_obj_t * btn)
 		lv_obj_set_hidden(equalizerScreen,0);
 		lv_obj_t* obs[4] = { rollers[0], rollers[1], rollers[2], eqBackBtn};
 		setActiveGroup(EQ_SCREEN,4,obs);
+		lv_group_set_editing(groups[EQ_SCREEN],false);
 	}
 	else if (btn == mainFileBtn)
 	{
@@ -115,6 +113,7 @@ static lv_res_t btn_action(lv_obj_t * btn)
 		lv_obj_set_hidden(filesScreen,0);
 		lv_obj_t * obs[2]={fileList[fileListPointer]};
 		setActiveGroup(FILE_SCREEN0 + fileListPointer,1, obs);
+		lv_group_set_editing(groups[FILE_SCREEN0+fileListPointer],true);
 	}
 	else if(btn == mainAudioBtn)
 	{
@@ -192,6 +191,7 @@ static lv_res_t fileScreenUpdate(lv_obj_t* obj)
 		lv_list_set_anim_time(fileList[fileListPointer], 0);
 		lv_obj_t * obs[2]={fileList[fileListPointer]};
 		setActiveGroup(FILE_SCREEN0 + fileListPointer,1, obs);
+		lv_group_set_editing(groups[FILE_SCREEN0+fileListPointer],true);
 
 		lv_obj_align(fileList[fileListPointer], NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
 		currarr current = UI.getCurrent(&fileListSz, &pos);
@@ -310,8 +310,7 @@ static void MainScreenCreate(void)
 	mainBtns[1]=mainEqBtn;
 	mainBtns[2]=mainFileBtn;
 	mainBtns[3]=mainSetBtn;
-	/*Create group of MainScren*/
-	groups[MAIN_SCREEN] = lv_group_create();
+
 	/*Create a second button matrix with the new styles*/
 
 	for(int i=0;i<4;i++)
@@ -319,7 +318,6 @@ static void MainScreenCreate(void)
 		//lv_btn_set_style(mainBtns[i], LV_BTN_STYLE_BG, &style_bg);
 		lv_btn_set_style(mainBtns[i], LV_BTN_STYLE_REL, &style_btn_rel);
 		lv_btn_set_style(mainBtns[i], LV_BTN_STYLE_PR, &style_btn_pr);
-		lv_group_add_obj(groups[MAIN_SCREEN], mainBtns[i]);
 	}
 
 	//lv_indev_set_group(kb_indev_main, groups[MAIN_SCREEN]);
