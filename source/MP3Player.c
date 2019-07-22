@@ -13,6 +13,10 @@
 #include "LEDDisplay.h"
 #include "MP3PlayerData.h"
 #include <string.h>
+#include <stdlib.h>
+#define ARM_MATH_CM4 1
+#include "arm_math.h"
+#include "arm_const_structs.h"
 //#include "fsl_debug_console.h"
 
 /*******************************************************************************
@@ -31,8 +35,8 @@ static unsigned short buffR[PING_PONG_BUFFS*MP3_BUFFER_SIZE/4];
 static unsigned short* outBuffL[PING_PONG_BUFFS];
 static unsigned short* outBuffR[PING_PONG_BUFFS];
 static short decodeOut[MP3_BUFFER_SIZE/2];
-static int len=0,dur=0,lastStatus;
-static long long pos=0;
+static int len=0,lastStatus;
+static long long pos=0,dur=0;
 
 static int volumeMap[] = {	0,
 							137,
@@ -91,30 +95,57 @@ static int init()
 }
 static void fillBuffs(short* decodeOut,unsigned short* buffL,unsigned short* buffR,int buffLen)
 {
-	unsigned short tempL[1152],tempR[1152];
+	q15_t tempL[1152],tempR[1152];
 	if(buffLen > 1152)
 	{
 		for(int j=0;j<buffLen/2;j++)
 		{
 			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
-			unsigned temp=(((((int)decodeOut[2*j] + 32768))>>4))/2;
-			temp*=volumeMap[MP3PlayerData.volume];
-			temp>>=9;
-			tempL[j] = temp;//(float)decodeOut[2*j]*1.0/32768/20;
+			//unsigned temp=(((((int)decodeOut[2*j] + 32768))>>4))/2;
+			//temp*=volumeMap[MP3PlayerData.volume];
+			//temp>>=9;
+			tempL[j] = (decodeOut[2*j]/2+(1<<14))>>3;//(float)decodeOut[2*j]*1.0/32768/20;
 			//buffL[j] = temp;
 
 			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
 
-			temp=(((((int)decodeOut[2*j+1] + 32768))>>4))/2;
-			temp*=volumeMap[MP3PlayerData.volume];
-			temp>>=9;
-			tempR[j]=temp;//(float)decodeOut[2*j+1]*1.0/32768/20;
+			//temp=(((((int)decodeOut[2*j+1] + 32768))>>4))/2;
+			//temp*=volumeMap[MP3PlayerData.volume];
+			//temp>>=9;
+			tempR[j]=(decodeOut[2*j+1]/2+(1<<14))>>3;//(float)decodeOut[2*j+1]*1.0/32768/20;
 			//buffR[j] = temp;
 			//POR AHORA
-			tempL[j] = tempL[j]/2 + tempR[j]/2;
+			//tempL[j] = tempL[j]/2 + tempR[j]/2;
 		}
 		MP3Equalizer.equalize(tempL,buffL,1152,0);
+		//memcpy(buffL,tempL,1152*2);
+		//memcpy(buffR,tempR,1152*2);
 		MP3Equalizer.equalize(tempR,buffR,1152,1);
+		unsigned temp;
+		for(int j=0;j<buffLen/2;j++)
+		{
+			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
+			if(buffL[j]&(1<<15))
+				buffL[j]=0;
+			else if(buffL[j]>=1<<12)
+				buffL[j]=(1<<12)-1;
+			temp=((((unsigned)buffL[j])));
+			temp*=volumeMap[MP3PlayerData.volume];
+			temp>>=13;
+			buffL[j] = temp;
+
+			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
+			if(buffR[j]&(1<<15))
+				buffR[j]=0;
+			else if(buffR[j]>=1<<12)
+				buffR[j]=(1<<12)-1;
+			temp=(((((unsigned)buffR[j]))));
+			temp*=volumeMap[MP3PlayerData.volume];
+			temp>>=13;
+			buffR[j] = temp;
+			//POR AHORA
+			buffL[j] = buffL[j]/2 + buffR[j]/2;
+		}
 	}
 	else
 	{
@@ -132,7 +163,7 @@ static void fillBuffs(short* decodeOut,unsigned short* buffL,unsigned short* buf
 
 	}
 }
-static void startSong(char* file,int volume)
+static void startSong(char* file)
 {
 	//Reiniciamos el decodificador MP3
 	MP3DEC.unloadFile();
@@ -156,7 +187,7 @@ static void startSong(char* file,int volume)
 							songTitle[k]='\0';
 		}
 	}
-	MP3UiSetSongInfo(songTitle,songArtist,dur/1000,1,NULL);
+	MP3UI.setSongInfo(songTitle,songArtist,dur/1000,1,NULL);
 	while(len<=0)
 		len=MP3DEC.decode(decodeOut,&buffLen);
 	MP3FrameInfo finfo=MP3DEC.getFrameInfo();
@@ -184,13 +215,13 @@ static void startSong(char* file,int volume)
 static void update()
 {
 	//Si se selecciono un archivo nos devolvera el nombre, si no hay SD -1 y si no se selecciono nada 0
-	char* file = getMP3file();
+	char* file = MP3UI.getMP3file();
 	if(file!=(char*)-1)
 	{
 		//Si se selecciono un archivo
 		if(file!=NULL)
 		{
-			startSong(file,MP3PlayerData.volume);
+			startSong(file);
 			MP3PlayerData.play=1;
 		}
 		if(MP3PlayerData.play==1 && MP3DEC.onFile()==1)
@@ -216,8 +247,8 @@ static void update()
 						//Actualizo el vumetro analizador de espectro
 						pos+=len;
 						MP3FrameInfo finfo=MP3DEC.getFrameInfo();
-						LEDDisplay.setVumeter(decodeOut,finfo.outputSamps,1);
-						MP3UiSetSongInfo(NULL,NULL,pos/1000,0,LEDDisplay.getEqualizer());
+						LEDDisplay.setVumeter(decodeOut,finfo.outputSamps,MP3PlayerData.vumeterMode);
+						MP3UI.setSongInfo(NULL,NULL,pos/1000,0,LEDDisplay.getEqualizer());
 						len=0;
 					}
 					else if(ret<0)
@@ -229,29 +260,29 @@ static void update()
 					{
 						//Termino de reproducirse la cancion actual
 						float eqPoints[8]={0,0,0,0,0,0,0,0};
-						MP3UiSetSongInfo(NULL,NULL,dur/1000,0,eqPoints);
+						MP3UI.setSongInfo(NULL,NULL,dur/1000,0,eqPoints);
 						MP3DEC.unloadFile();
 						SigGen.stop();
 						if(MP3PlayerData.playMode==1 || MP3PlayerData.playMode==0)
 						{
 							char nextFile[256];
-							getMP3AdjFile(1,nextFile);
+							MP3UI.getAdjFile(1,nextFile);
 							if(nextFile[0]==0)
 							{
 								if(MP3PlayerData.playMode==1)
 								{
-									getMP3AdjFile(1,nextFile);
+									MP3UI.getAdjFile(1,nextFile);
 									if(nextFile[0]!=(char)-1)
 									{
-										startSong(nextFile,MP3PlayerData.volume);
+										startSong(nextFile);
 									}
 								}
 								else
 								{
-									getMP3AdjFile(1,nextFile);
+									MP3UI.getAdjFile(1,nextFile);
 									if(nextFile[0]!=(char)-1)
 									{
-										startSong(nextFile,MP3PlayerData.volume);
+										startSong(nextFile);
 										SigGen.pause();
 										MP3PlayerData.play=0;
 									}
@@ -259,7 +290,7 @@ static void update()
 							}
 							else if(nextFile[0]!=(char)-1)
 							{
-								startSong(nextFile,MP3PlayerData.volume);
+								startSong(nextFile);
 							}
 
 						}
@@ -268,7 +299,7 @@ static void update()
 							char nextFile[256];
 							if(nextFile[0]!=(char)-1)
 							{
-								getMP3AdjFile(1,nextFile);
+								MP3UI.getAdjFile(1,nextFile);
 							}
 						}
 						//printf("Next file is %s\n",nextFile);
@@ -287,23 +318,23 @@ static void update()
 		if(MP3PlayerData.offset != 0)
 		{
 			float eqPoints[8]={0,0,0,0,0,0,0,0};
-			MP3UiSetSongInfo(NULL,NULL,dur/1000,0,eqPoints);
+			MP3UI.setSongInfo(NULL,NULL,dur/1000,0,eqPoints);
 			MP3DEC.unloadFile();
 			SigGen.stop();
 			char nextFile[256];
-			if((MP3PlayerData.offset == -1) && (pos >= (dur/2)))
+			if((MP3PlayerData.offset == -1) && (pos >= 3000))
 			{
-				getMP3AdjFile(0,nextFile);
+				MP3UI.getAdjFile(0,nextFile);
 			}
 			else
 			{
-				getMP3AdjFile(MP3PlayerData.offset,nextFile);
+				MP3UI.getAdjFile(MP3PlayerData.offset,nextFile);
 				if(nextFile[0]==0)
-					getMP3AdjFile(MP3PlayerData.offset,nextFile);
+					MP3UI.getAdjFile(MP3PlayerData.offset,nextFile);
 			}
 			if(nextFile[0]!=(char)-1)
 			{
-				startSong(nextFile,MP3PlayerData.volume);
+				startSong(nextFile);
 			}
 			MP3PlayerData.offset = 0;
 		}

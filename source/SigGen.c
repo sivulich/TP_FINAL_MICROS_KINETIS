@@ -68,6 +68,7 @@ void EDMA_Callback(edma_handle_t *handle, void *param, bool transferDone, uint32
         									 2, buffLen*2, kEDMA_MemoryToPeripheral);
         	EDMA_SubmitTransfer(&g_EDMA_Handle, &transferConfig);
         	EDMA_StartTransfer(&g_EDMA_Handle);
+
         }
     }
 }

@@ -26,20 +26,26 @@ extern "C" {
 	*      TYPEDEFS
 	**********************/
 	typedef enum{MAIN_SCREEN=0,PLAY_SCREEN,EQ_SCREEN,FILE_SCREEN0,FILE_SCREEN1,SETTING_SCREEN,SCREENS} screenEnum;
+	typedef struct MP3UI_ MP3UI_;
+
+	extern MP3UI_ MP3UI;
+
+	struct MP3UI_{
+		void (*init)(lv_indev_drv_t* kb_dr);
+
+		char* (*getMP3file)();
+
+		void (*getAdjFile)(int off,char* dest);
+
+		void (*setSongInfo)(const char* title, const char*artist, int dur,int first,float* eqPoints);
+
+		void (*update)();
+
+	};
 	/**********************
 	* GLOBAL PROTOTYPES
 	**********************/
 
-	/**
-	* Create the MP3_UI
-	*/
-	void MP3UiCreate(lv_indev_drv_t* kb_dr);
-
-	char* getMP3file();
-
-	void getMP3AdjFile(int off,char* dest);
-
-	void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,float* eqPoints);
 
 	//int MP3UiGetCurrentScreen();
 	/**********************

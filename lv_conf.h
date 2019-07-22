@@ -55,7 +55,7 @@
 #define LV_ANTIALIAS        1       /*1: Enable anti-aliasing*/
 
 /*Screen refresh settings*/
-#define LV_REFR_PERIOD     	40    /*Screen refresh period in milliseconds*/
+#define LV_REFR_PERIOD     	50    /*Screen refresh period in milliseconds*/
 #define LV_INV_FIFO_SIZE    150    /*The average count of objects on a screen */
 
 /*=================
@@ -63,7 +63,7 @@
  *=================*/
 
 /*Input device settings*/
-#define LV_INDEV_READ_PERIOD            50                     /*Input device read period in milliseconds*/
+#define LV_INDEV_READ_PERIOD            100                     /*Input device read period in milliseconds*/
 #define LV_INDEV_POINT_MARKER           0                      /*Mark the pressed points  (required: USE_LV_REAL_DRAW = 1)*/
 #define LV_INDEV_DRAG_LIMIT             10                     /*Drag threshold in pixels */
 #define LV_INDEV_DRAG_THROW             20                     /*Drag throw slow-down in [%]. Greater value means faster slow-down */
@@ -153,10 +153,10 @@
 #define USE_LV_FONT_DEJAVU_30_CYRILLIC     0
 #define USE_LV_FONT_SYMBOL_30              0
 
-#define USE_LV_FONT_DEJAVU_40              0
+#define USE_LV_FONT_DEJAVU_40              4
 #define USE_LV_FONT_DEJAVU_40_LATIN_SUP    0
 #define USE_LV_FONT_DEJAVU_40_CYRILLIC     0
-#define USE_LV_FONT_SYMBOL_40              0
+#define USE_LV_FONT_SYMBOL_40              4
 
 #define USE_LV_FONT_MONOSPACE_8            0
 

@@ -12,12 +12,14 @@ typedef struct MP3Equalizer_ MP3Equalizer_;
 
 extern MP3Equalizer_ MP3Equalizer;
 
-
+#define ARM_MATH_CM4 1
+#include "arm_math.h"
+#include "arm_const_structs.h"
 
 struct MP3Equalizer_{
 	void (*init)(int fs);
 
-	void (*equalize)(unsigned short* input,unsigned short* output, int len, int dir);
+	void (*equalize)(q15_t* input,unsigned short* output, int len, int dir);
 
 	void(*setGains)(int* gains);
 

@@ -8,9 +8,6 @@
 #ifndef POWEROFFCONTROL_H_
 #define POWEROFFCONTROL_H_
 
-#define SCREEN_GPIO GPIOB,9
-#define ONOFF_GPIO	GPIOX,x
-
 typedef struct POWEROFF_ POWEROFF_;
 
 extern POWEROFF_ POWEROFF;
@@ -27,5 +24,9 @@ struct POWEROFF_
 	*/
 	void(*recover)();
 
+	/**
+	* @brief 			Init power control module
+	*/
+	void(*init)();
 };
 #endif /* POWEROFFCONTROL_H_ */

@@ -115,6 +115,20 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_TMR_1588_0_PIN 16U    /*!<@brief PORTC pin index: 16 */
                                              /* @} */
 
+/*! @name PORTE24 (number 31), J2[20]/U8[4]/I2C0_SCL
+  @{ */
+#define BOARD_INITPINS_ACCEL_SCL_GPIO GPIOE /*!<@brief GPIO device name: GPIOE */
+#define BOARD_INITPINS_ACCEL_SCL_PORT PORTE /*!<@brief PORT device name: PORTE */
+#define BOARD_INITPINS_ACCEL_SCL_PIN 24U    /*!<@brief PORTE pin index: 24 */
+                                            /* @} */
+
+/*! @name PORTE25 (number 32), J2[18]/U8[6]/I2C0_SDA
+  @{ */
+#define BOARD_INITPINS_ACCEL_SDA_GPIO GPIOE /*!<@brief GPIO device name: GPIOE */
+#define BOARD_INITPINS_ACCEL_SDA_PORT PORTE /*!<@brief PORT device name: PORTE */
+#define BOARD_INITPINS_ACCEL_SDA_PIN 25U    /*!<@brief PORTE pin index: 25 */
+                                            /* @} */
+
 /*!
  * @brief Configures pin routing and optionally pin electrical features.
  *

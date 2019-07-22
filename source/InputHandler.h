@@ -7,6 +7,7 @@
 void InputHandlerInit();
 
 bool InputHandlerRead(lv_indev_data_t * data);
+bool encoder_read(lv_indev_data_t* data);
 
 
 #endif

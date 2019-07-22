@@ -3,16 +3,21 @@
 #include "MP3PlayerData.h"
 #include "MP3Player.h"
 #include "MP3Equalizer.h"
+#include "fsl_rtc.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+#define STATUS_BAR_HEIGHT 20
+
 static lv_res_t fileScreenUpdate(lv_obj_t* obj);
 /*Screens*/
-static lv_obj_t * mainScreen, *equalizerScreen,*filesScreen,*playScreen, *settingsScreen;
+static lv_obj_t *baseScreen,* mainScreen, *equalizerScreen,*filesScreen,*playScreen, *settingsScreen;
 
+/*Status bar info*/
+static lv_obj_t* volumeLabel,*dateLabel,*playInfoLabel;
 /*Main Screen Info*/
-lv_obj_t *mainAudioBtn,*mainEqBtn,*mainFileBtn,*mainSetBtn;
-lv_obj_t * mainBtns[4];
+static lv_obj_t *mainAudioBtn,*mainEqBtn,*mainFileBtn,*mainSetBtn;
+static lv_obj_t * mainBtns[4];
 
 /*File Screen info*/
 static lv_obj_t * currentFileList[MAX_FILES],*fileList[2];//*fileListBackBtn;
@@ -25,8 +30,7 @@ static lv_obj_t *eqBackBtn,*rollers[3];
 
 /*PlayScreen Info*/
 static unsigned duration,currentTime;
-static lv_obj_t* progressBar,*playBackBtn,*songNameLbl,*artistNameLbl,*volumeLabel,*eqGraph;
-lv_chart_series_t * ser1;
+static lv_obj_t* progressBar,*playBackBtn,*songNameLbl,*artistNameLbl,*prevLbl,*nextLbl,*playPauseLbl;
 
 /*SettingsScreen Info*/
 static lv_obj_t* setBackButton, *loopModeBtn;
@@ -43,6 +47,15 @@ static lv_indev_t* kb_indev;
 /*Groups*/
 static lv_group_t * groups[SCREENS];
 
+static void hideAllScreens()
+{
+	lv_obj_set_hidden(mainScreen,1);
+	lv_obj_set_hidden(playScreen,1);
+	lv_obj_set_hidden(equalizerScreen,1);
+	lv_obj_set_hidden(filesScreen,1);
+	lv_obj_set_hidden(settingsScreen,1);
+}
+
 static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 {
 	if (groups[p] != NULL)
@@ -50,6 +63,7 @@ static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 	groups[p] = lv_group_create();
 	for(int i=0;i<qnt;i++)
 		lv_group_add_obj(groups[p], ob[i]);
+	lv_indev_set_group(kb_indev, groups[p]);
 	for (int i = 0; i < SCREENS; i++)
 		if (groups[i] != 0)
 		{
@@ -57,10 +71,6 @@ static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 			{
 				lv_group_del(groups[i]);
 				groups[i] = 0;
-			}
-			else
-			{
-				lv_indev_set_group(kb_indev, groups[i]);
 			}
 		}
 			
@@ -78,7 +88,9 @@ static int checkMP3file(char* fn, size_t sz)
 
 static lv_res_t retMainScreen(lv_obj_t* obj)
 {
-	lv_scr_load(mainScreen);
+	//lv_scr_load(mainScreen);
+	hideAllScreens();
+	lv_obj_set_hidden(mainScreen,0);
 	
 	setActiveGroup(MAIN_SCREEN,4,mainBtns);
 	return LV_RES_OK;
@@ -88,25 +100,31 @@ static lv_res_t btn_action(lv_obj_t * btn)
 {
 	if (btn == mainEqBtn)
 	{
-		lv_scr_load(equalizerScreen);
+		hideAllScreens();
+		lv_obj_set_hidden(equalizerScreen,0);
 		lv_obj_t* obs[4] = { rollers[0], rollers[1], rollers[2], eqBackBtn};
 		setActiveGroup(EQ_SCREEN,4,obs);
+		lv_group_set_editing(groups[EQ_SCREEN],false);
 	}
 	else if (btn == mainFileBtn)
 	{
 		fileScreenUpdate(NULL);
-		lv_scr_load(filesScreen);
+		hideAllScreens();
+		lv_obj_set_hidden(filesScreen,0);
 		lv_obj_t * obs[2]={fileList[fileListPointer]};
 		setActiveGroup(FILE_SCREEN0 + fileListPointer,1, obs);
+		lv_group_set_editing(groups[FILE_SCREEN0+fileListPointer],true);
 	}
 	else if(btn == mainAudioBtn)
 	{
 		setActiveGroup(PLAY_SCREEN,1,&playBackBtn);
-		lv_scr_load(playScreen);
+		hideAllScreens();
+		lv_obj_set_hidden(playScreen,0);
 	}
 	else if(btn == mainSetBtn)
 	{
-		lv_scr_load(settingsScreen);
+		hideAllScreens();
+		lv_obj_set_hidden(settingsScreen,0);
 		lv_obj_t * obs[2]={loopModeBtn, setBackButton};
 		setActiveGroup(SETTING_SCREEN,2,obs);
 	}
@@ -149,25 +167,31 @@ static lv_res_t fileScreenUpdate(lv_obj_t* obj)
 		newFile=1;
 		newFileName=currFile;
 		setActiveGroup(PLAY_SCREEN,1,&playBackBtn);
-		lv_scr_load(playScreen);
+		hideAllScreens();
+		lv_obj_set_hidden(playScreen,0);
 	}
 	else
 	{
 		MP3Player.update();
 		//hide the current list and change to the other
+
 		lv_obj_set_hidden(fileList[fileListPointer], true);
 		fileListPointer = (fileListPointer + 1) % 2;
 		lv_obj_set_hidden(fileList[fileListPointer], false);
 		
 		//delete the list and group to re-create them 
+		int width=lv_obj_get_width(fileList[fileListPointer]);
+		int height=lv_obj_get_height(fileList[fileListPointer]);
 		lv_obj_del(fileList[fileListPointer]);
 		MP3Player.update();
 		//re-creating...
 		fileList[fileListPointer] = lv_list_create(filesScreen, NULL);
-		lv_obj_set_height(fileList[fileListPointer], LV_VER_RES);
-		lv_obj_set_width(fileList[fileListPointer], LV_HOR_RES);
+		lv_obj_set_height(fileList[fileListPointer], height);
+		lv_obj_set_width(fileList[fileListPointer], width);
+		lv_list_set_anim_time(fileList[fileListPointer], 0);
 		lv_obj_t * obs[2]={fileList[fileListPointer]};
 		setActiveGroup(FILE_SCREEN0 + fileListPointer,1, obs);
+		lv_group_set_editing(groups[FILE_SCREEN0+fileListPointer],true);
 
 		lv_obj_align(fileList[fileListPointer], NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
 		currarr current = UI.getCurrent(&fileListSz, &pos);
@@ -198,6 +222,8 @@ static lv_res_t fileScreenUpdate(lv_obj_t* obj)
 				lv_btn_set_style(currentFileList[i], LV_BTN_STATE_REL, &style_btn_rel);
 				lv_btn_set_style(currentFileList[i], LV_BTN_STATE_PR, &style_btn_pr);
 			}
+
+
 			MP3Player.update();
 		}
 		for (unsigned i = 0; i < fileListSz; i++)
@@ -217,17 +243,21 @@ static lv_res_t fileScreenUpdate(lv_obj_t* obj)
 				lv_btn_set_style(currentFileList[i], LV_BTN_STATE_REL, &style_btn_rel);
 				lv_btn_set_style(currentFileList[i], LV_BTN_STATE_PR, &style_btn_pr);
 			}
+			lv_label_set_long_mode(lv_list_get_btn_label(currentFileList[i]), LV_LABEL_LONG_DOT);
 			MP3Player.update();
 		}
 	}
 	MP3Player.update();
 	return LV_RES_OK;
 }
-
+lv_style_t style;
 static void MainScreenCreate(void)
 {
-	mainScreen = lv_obj_create(NULL, NULL);
-	lv_obj_set_size(mainScreen,LV_HOR_RES,LV_VER_RES);
+	mainScreen = lv_cont_create(baseScreen, NULL);
+	lv_obj_set_size(mainScreen,LV_HOR_RES,LV_VER_RES-STATUS_BAR_HEIGHT);
+	lv_obj_align(mainScreen,NULL,LV_ALIGN_IN_BOTTOM_MID,0,0);
+	int width = lv_obj_get_width(mainScreen);
+	int height= lv_obj_get_height(mainScreen);
 	//lv_obj_set_pos(mainScreen,0,0);
 	//static const char * btnm_map[] = { SYMBOL_AUDIO, SYMBOL_EDIT,"\n", SYMBOL_DIRECTORY,SYMBOL_SETTINGS, "" };
 	/*Create a default button matrix*/
@@ -235,52 +265,59 @@ static void MainScreenCreate(void)
 	//lv_btnm_set_map(btnm1, btnm_map);
 	//lv_btnm_set_action(btnm1, btnm_action);
 	//lv_obj_set_size(btnm1, LV_HOR_RES, LV_VER_RES);
-	lv_obj_t* label;
+
+	lv_style_copy(&style, &lv_style_plain);
+	style.text.color = LV_COLOR_WHITE;
+	style.text.font = &lv_font_dejavu_40;
+
 	mainAudioBtn=lv_btn_create(mainScreen,NULL);
 	lv_cont_set_fit(mainAudioBtn, false, false);
-	lv_obj_set_size(mainAudioBtn,LV_HOR_RES/2, LV_VER_RES/2);
+	lv_obj_set_size(mainAudioBtn,width/2, height/2);
 	lv_obj_align(mainAudioBtn,mainScreen,LV_ALIGN_IN_TOP_LEFT,0,0);
 	lv_btn_set_action(mainAudioBtn, LV_BTN_ACTION_CLICK, btn_action);
-	label = lv_label_create(mainAudioBtn, NULL);
+	lv_obj_t* label = lv_label_create(mainAudioBtn, NULL);
 	lv_label_set_text(label, SYMBOL_AUDIO);
+	lv_label_set_style(label,&style);
 
 	mainEqBtn=lv_btn_create(mainScreen,NULL);
 	lv_cont_set_fit(mainEqBtn, false, false);
-	lv_obj_set_size(mainEqBtn,LV_HOR_RES/2, LV_VER_RES/2);
+	lv_obj_set_size(mainEqBtn,width/2, height/2);
 	lv_obj_align(mainEqBtn,mainAudioBtn,LV_ALIGN_OUT_RIGHT_MID,0,0);
 	lv_btn_set_action(mainEqBtn, LV_BTN_ACTION_CLICK, btn_action);
 	label = lv_label_create(mainEqBtn, NULL);
 	lv_label_set_text(label, SYMBOL_EDIT);
+	lv_label_set_style(label,&style);
 
 	mainFileBtn=lv_btn_create(mainScreen,NULL);
 	lv_cont_set_fit(mainFileBtn, false, false);
-	lv_obj_set_size(mainFileBtn,LV_HOR_RES/2, LV_VER_RES/2);
+	lv_obj_set_size(mainFileBtn,width/2, height/2);
 	lv_obj_align(mainFileBtn,mainAudioBtn,LV_ALIGN_OUT_BOTTOM_MID,0,0);
 	lv_btn_set_action(mainFileBtn, LV_BTN_ACTION_CLICK, btn_action);
 	label = lv_label_create(mainFileBtn, NULL);
 	lv_label_set_text(label, SYMBOL_DIRECTORY);
+	lv_label_set_style(label,&style);
 
 	mainSetBtn=lv_btn_create(mainScreen,NULL);
 	lv_cont_set_fit(mainSetBtn, false, false);
-	lv_obj_set_size(mainSetBtn,LV_HOR_RES/2, LV_VER_RES/2);
+	lv_obj_set_size(mainSetBtn,width/2, height/2);
 	lv_obj_align(mainSetBtn,mainFileBtn,LV_ALIGN_OUT_RIGHT_MID,0,0);
 	lv_btn_set_action(mainSetBtn, LV_BTN_ACTION_CLICK, btn_action);
 	label = lv_label_create(mainSetBtn, NULL);
 	lv_label_set_text(label, SYMBOL_SETTINGS);
+	lv_label_set_style(label,&style);
 
 	mainBtns[0]=mainAudioBtn;
 	mainBtns[1]=mainEqBtn;
 	mainBtns[2]=mainFileBtn;
 	mainBtns[3]=mainSetBtn;
-	/*Create group of MainScren*/
-	groups[MAIN_SCREEN] = lv_group_create();
+
 	/*Create a second button matrix with the new styles*/
+
 	for(int i=0;i<4;i++)
 	{
 		//lv_btn_set_style(mainBtns[i], LV_BTN_STYLE_BG, &style_bg);
 		lv_btn_set_style(mainBtns[i], LV_BTN_STYLE_REL, &style_btn_rel);
 		lv_btn_set_style(mainBtns[i], LV_BTN_STYLE_PR, &style_btn_pr);
-		lv_group_add_obj(groups[MAIN_SCREEN], mainBtns[i]);
 	}
 
 	//lv_indev_set_group(kb_indev_main, groups[MAIN_SCREEN]);
@@ -349,34 +386,52 @@ static lv_res_t EqualizerScreenCB(lv_obj_t* r)
 
 static void EqualizerScreenCreate(void)
 {
-	equalizerScreen = lv_obj_create(NULL, NULL);
+	equalizerScreen = lv_cont_create(baseScreen, NULL);
+	lv_obj_set_size(equalizerScreen,LV_HOR_RES,LV_VER_RES-STATUS_BAR_HEIGHT);
+	lv_obj_align(equalizerScreen,NULL,LV_ALIGN_IN_BOTTOM_MID,0,0);
+	int width = lv_obj_get_width(equalizerScreen);
+	int height= lv_obj_get_height(equalizerScreen);
+
 	lv_obj_set_style(equalizerScreen, &style_bg);
 	static char *names[] = { "Bass","Mid","Trebble" };
-	rollers[0]  = createRoller(names[0], 0* LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
-	rollers[1]  = createRoller(names[1], 1*LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
-	rollers[2]  = createRoller(names[2], 2* LV_HOR_RES / 3, LV_VER_RES / 3, LV_HOR_RES / 3, LV_VER_RES * 2 / 3);
+	rollers[0]  = createRoller(names[0], 0* width / 3, height / 3, width / 3, height * 2 / 3);
+	rollers[1]  = createRoller(names[1], 1*width/ 3, height / 3, width / 3, height * 2 / 3);
+	rollers[2]  = createRoller(names[2], 2* width / 3, height / 3, width / 3, height * 2 / 3);
 	lv_roller_set_action(rollers[0], EqualizerScreenCB);
 	lv_roller_set_action(rollers[1], EqualizerScreenCB);
 	lv_roller_set_action(rollers[2], EqualizerScreenCB);
 	eqBackBtn = BackButtonCreate(equalizerScreen, retMainScreen);
 }
 
-
+lv_res_t LoopModeCB(lv_obj_t * btn)
+{
+	if(MP3PlayerData.playMode)
+		lv_btn_set_state(btn, LV_BTN_STATE_TGL_PR);
+	else
+		lv_btn_set_state(btn, LV_BTN_STATE_TGL_REL);
+	MP3PlayerData.playMode ^= 1;
+	return LV_RES_OK;
+}
 
 static void SettingsScreenCreate(void)
 {
-	settingsScreen = lv_obj_create(NULL, NULL);
+	settingsScreen = lv_cont_create(baseScreen, NULL);
+	lv_obj_set_size(settingsScreen,LV_HOR_RES,LV_VER_RES-STATUS_BAR_HEIGHT);
+	lv_obj_align(settingsScreen,NULL,LV_ALIGN_IN_BOTTOM_MID,0,0);
+	int width = lv_obj_get_width(playScreen);
+	int height= lv_obj_get_height(playScreen);
+
 	lv_obj_set_style(settingsScreen, &style_bg);
 
 	lv_obj_t* label;
 	loopModeBtn=lv_btn_create(settingsScreen,NULL);
 	lv_cont_set_fit(loopModeBtn, false, false);
-	lv_obj_set_size(loopModeBtn,LV_HOR_RES/2, LV_VER_RES/2);
+	lv_obj_set_size(loopModeBtn,width/2, height/2);
 
 	lv_btn_set_state(loopModeBtn, LV_BTN_STATE_TGL_REL);  /*Set toggled state*/
 	lv_obj_align(loopModeBtn,settingsScreen,LV_ALIGN_CENTER,0,0);
 
-	//lv_roller_set_action(loopModeBtn, EqualizerScreenCB);
+	lv_btn_set_action(loopModeBtn,LV_BTN_ACTION_CLICK, LoopModeCB);
 	label = lv_label_create(loopModeBtn, NULL);
 	lv_label_set_text(label, "Loop Mode Enable");
 
@@ -385,17 +440,21 @@ static void SettingsScreenCreate(void)
 
 static void FilesScreenCreate(void)
 {
-	filesScreen = lv_obj_create(NULL, NULL);
+	filesScreen = lv_cont_create(baseScreen, NULL);
+	lv_obj_set_size(filesScreen,LV_HOR_RES,LV_VER_RES-STATUS_BAR_HEIGHT);
+	lv_obj_align(filesScreen,NULL,LV_ALIGN_IN_BOTTOM_MID,0,0);
 	lv_obj_set_style(filesScreen, &style_bg);
 
+	int width = lv_obj_get_width(filesScreen);
+	int height= lv_obj_get_height(filesScreen);
 	unsigned pos;
 	currarr current = UI.getCurrent(&fileListSz, &pos);
 	fileList[0] = lv_list_create(filesScreen, NULL);
 	fileList[1] = lv_list_create(filesScreen, NULL);
-	lv_obj_set_height(fileList[0], LV_VER_RES);
-	lv_obj_set_height(fileList[1], LV_VER_RES);
-	lv_obj_set_width(fileList[0], LV_HOR_RES);
-	lv_obj_set_width(fileList[1], LV_HOR_RES);
+	lv_obj_set_height(fileList[0], height);
+	lv_obj_set_height(fileList[1], height);
+	lv_obj_set_width(fileList[0], width);
+	lv_obj_set_width(fileList[1], width);
 	lv_obj_set_hidden(fileList[1], true);
 	for (unsigned i = 0; i < fileListSz; i++)
 	{
@@ -430,30 +489,23 @@ static void FilesScreenCreate(void)
 }
 static void PlayScreenCreate(void)
 {
-	playScreen = lv_obj_create(NULL, NULL);
-
-	eqGraph = lv_chart_create(playScreen, NULL);
-
-	ser1 = lv_chart_add_series(eqGraph, LV_COLOR_RED);
-	lv_chart_set_series_width(eqGraph, 70);
-	lv_chart_set_point_count(eqGraph, 8);
-	lv_chart_set_type(eqGraph, LV_CHART_TYPE_COLUMN);
-	lv_obj_set_size(eqGraph, LV_HOR_RES*3/4, LV_VER_RES*2/5);
-	lv_obj_align(eqGraph, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, 0);
-	lv_chart_set_style(eqGraph, &style_bgg);
-	lv_chart_set_div_line_count(eqGraph, 0, 0);
-	lv_chart_set_series_darking(eqGraph, LV_OPA_100);
+	playScreen = lv_cont_create(baseScreen, NULL);
+	lv_obj_set_size(playScreen,LV_HOR_RES,LV_VER_RES-STATUS_BAR_HEIGHT);
+	lv_obj_align(playScreen,NULL,LV_ALIGN_IN_BOTTOM_MID,0,0);
 
 	/*Create label on the screen. By default it will inherit the style of the screen*/
+
 	songNameLbl = lv_label_create(playScreen, NULL);
-	lv_obj_set_width(songNameLbl, LV_HOR_RES *3/ 4);
+	int width = lv_obj_get_width(playScreen);
+	int height= lv_obj_get_height(playScreen);
+	lv_obj_set_width(songNameLbl, width *3/ 4);
 	lv_label_set_text(songNameLbl, "Song Name");
 	lv_obj_align(songNameLbl, NULL, LV_ALIGN_IN_TOP_MID, 0, lv_obj_get_height(songNameLbl));
 
 	lv_label_set_long_mode(songNameLbl, LV_LABEL_LONG_ROLL);
 
 	artistNameLbl = lv_label_create(playScreen, NULL);
-	lv_obj_set_width(artistNameLbl, LV_HOR_RES*3 / 4);
+	lv_obj_set_width(artistNameLbl, width*3 / 4);
 	lv_label_set_text(artistNameLbl, "Artist");
 	lv_obj_align(artistNameLbl, songNameLbl, LV_ALIGN_OUT_BOTTOM_MID, 0, +lv_obj_get_height(artistNameLbl));
 
@@ -461,17 +513,27 @@ static void PlayScreenCreate(void)
 
 	progressBar = lv_bar_create(playScreen, NULL);
 	lv_bar_set_range(progressBar, 0, 0);
-	lv_obj_set_width(progressBar, LV_HOR_RES *3/ 4);
+	lv_obj_set_width(progressBar, width *3/ 4);
 	lv_obj_align(progressBar, artistNameLbl, LV_ALIGN_OUT_BOTTOM_MID, 0, +lv_obj_get_height(progressBar)/2);
 
-	volumeLabel = lv_label_create(playScreen,NULL);
-	lv_label_set_text(volumeLabel,SYMBOL_VOLUME_MAX" 30");
-	lv_obj_align(volumeLabel, NULL, LV_ALIGN_IN_TOP_RIGHT, -20, 0);
+
+	prevLbl = lv_label_create(playScreen,NULL);
+	lv_label_set_text(prevLbl,SYMBOL_PREV);
+	lv_obj_align(prevLbl,NULL,LV_ALIGN_IN_BOTTOM_LEFT,width/3,-5);
+
+	nextLbl = lv_label_create(playScreen,NULL);
+	lv_label_set_text(nextLbl,SYMBOL_NEXT);
+	lv_obj_align(nextLbl,NULL,LV_ALIGN_IN_BOTTOM_RIGHT,-width/3,-5);
+
+	playPauseLbl = lv_label_create(playScreen,NULL);
+	lv_label_set_text(playPauseLbl,SYMBOL_PLAY);
+	lv_obj_align(playPauseLbl,NULL,LV_ALIGN_IN_BOTTOM_MID,0,-5);
+
 
 	playBackBtn=BackButtonCreate(playScreen, retMainScreen);
 }
 
-void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,float* eqPoints)
+static void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,float* eqPoints)
 {
 	if (first == 1)
 	{
@@ -493,36 +555,10 @@ void MP3UiSetSongInfo(const char* title, const char*artist, int dur,int first,fl
 	{
 		currentTime = dur;
 		lv_bar_set_value(progressBar, currentTime);
-		ser1->points[0] = eqPoints[0];
-		ser1->points[1] = eqPoints[1];
-		ser1->points[2] = eqPoints[2];
-		ser1->points[3] = eqPoints[3];
-		ser1->points[4] = eqPoints[4];
-		ser1->points[5] = eqPoints[5];
-		ser1->points[6] = eqPoints[6];
-		ser1->points[7] = eqPoints[7];
-
-		lv_chart_refresh(eqGraph);
-	}
-	if(MP3PlayerData.volume == 0)
-	{
-		lv_label_set_text(volumeLabel,SYMBOL_MUTE" 0");
-	}
-	else if(MP3PlayerData.volume<(MAX_VOLUME * 2.0 / 3.0))
-	{
-		char txt[8];
-		sprintf(txt,SYMBOL_VOLUME_MID" %d",MP3PlayerData.volume);
-		lv_label_set_text(volumeLabel,txt);
-	}
-	else
-	{
-		char txt[8];
-		sprintf(txt,SYMBOL_VOLUME_MAX" %d",MP3PlayerData.volume);
-		lv_label_set_text(volumeLabel,txt);
 	}
 }
 
-void StylesInit()
+static void StylesInit()
 {
 	/*Background style*/
 	lv_style_copy(&style_bg, &lv_style_plain);
@@ -557,22 +593,61 @@ void StylesInit()
 	style_btn_pr.text.color = LV_COLOR_MAKE(0xbb, 0xd5, 0xf1);
 }
 
-void MP3UiCreate(lv_indev_drv_t* kb_dr)
+static void statusBarCreate(void)
+{
+	volumeLabel = lv_label_create(baseScreen,NULL);
+	lv_label_set_text(volumeLabel,SYMBOL_VOLUME_MAX " 15");
+	lv_obj_align(volumeLabel, NULL, LV_ALIGN_IN_TOP_RIGHT, -20, 0);
+
+	dateLabel = lv_label_create(baseScreen,NULL);
+	lv_label_set_text(dateLabel,"dd/mm/aaaa hh:mm");
+	lv_obj_align(dateLabel,NULL,LV_ALIGN_IN_TOP_MID,0,0);
+
+	playInfoLabel = lv_label_create(baseScreen,NULL);
+	lv_label_set_text(playInfoLabel,SYMBOL_PLAY" "SYMBOL_LOOP);
+	lv_obj_align(playInfoLabel,NULL,LV_ALIGN_IN_TOP_LEFT,10,0);
+}
+
+
+static void MP3UiCreate(lv_indev_drv_t* kb_dr)
 {
 	kb_drv = kb_dr;
 	kb_indev = lv_indev_drv_register(kb_drv);
 	UIinit=UI.init();
 	StylesInit();
+	baseScreen = lv_obj_create(NULL,NULL);
+	statusBarCreate();
 	MainScreenCreate();
 	EqualizerScreenCreate();
 	FilesScreenCreate();
 	PlayScreenCreate();
 	SettingsScreenCreate();
-	lv_scr_load(mainScreen);
+	lv_scr_load(baseScreen);
+	hideAllScreens();
+	lv_obj_set_hidden(mainScreen,0);
 	setActiveGroup(MAIN_SCREEN,4,mainBtns);
+	rtc_config_t rtcConf;
+	RTC_GetDefaultConfig(&rtcConf);
+	RTC_Init(RTC,&rtcConf);
+	RTC_SetClockSource(RTC);
+	/*rtc_datetime_t date;
+	date.year = 2019U;
+	date.month = 3U;
+	date.day = 14U;
+	date.hour = 19U;
+	date.minute = 48;
+	date.second = 30;*/
+
+	/* RTC time counter has to be stopped before setting the date & time in the TSR register */
+	RTC_StopTimer(RTC);
+
+	/* Set RTC time to default */
+	//RTC_SetDatetime(RTC, &date);
+	RTC_StartTimer(RTC);
+	MP3UI.update();
 }
 
-char* getMP3file()
+static char* getMP3file()
 {
 	char* ret = UI.getFile();
 	if(ret == (char*)-1)
@@ -588,10 +663,63 @@ char* getMP3file()
 
 }
 
-void getMP3AdjFile(int off,char* dest)
+static void getMP3AdjFile(int off,char* dest)
 {
 	UI.getAdjFile(off,dest);
 	while(checkMP3file(dest,strlen(dest))==0 && dest[0]!=0 && dest[0]!=(char)-1)
 		UI.getAdjFile(off,dest);
 }
 
+static int lastVolume=0;
+
+static void update()
+{
+	if(lastVolume!=MP3PlayerData.volume)
+	{
+		lastVolume=MP3PlayerData.volume;
+		if(MP3PlayerData.volume == 0)
+		{
+			lv_label_set_text(volumeLabel,SYMBOL_MUTE" 0");
+		}
+		else if(MP3PlayerData.volume<(MAX_VOLUME * 2.0 / 3.0))
+		{
+			char txt[8];
+			sprintf(txt,SYMBOL_VOLUME_MID" %d",MP3PlayerData.volume);
+			lv_label_set_text(volumeLabel,txt);
+		}
+		else
+		{
+			char txt[8];
+			sprintf(txt,SYMBOL_VOLUME_MAX" %d",MP3PlayerData.volume);
+			lv_label_set_text(volumeLabel,txt);
+		}
+
+	}
+
+	if(MP3PlayerData.currentScreen==PLAY_SCREEN)
+	{
+		if(MP3PlayerData.play==1)
+			lv_label_set_text(playPauseLbl,SYMBOL_PAUSE);
+		else
+			lv_label_set_text(playPauseLbl,SYMBOL_PLAY);
+	}
+
+	rtc_datetime_t date;
+	char text[50];
+	RTC_GetDatetime(RTC,&date);
+	sprintf(text,"%02d/%02d/%d %02d:%02d",date.day,date.month,date.year,date.hour,date.minute);
+	lv_label_set_text(dateLabel,text);
+	if(MP3PlayerData.play==1 && MP3PlayerData.playMode==1)
+		lv_label_set_text(playInfoLabel,SYMBOL_PLAY" "SYMBOL_LOOP);
+	else if(MP3PlayerData.play==0 && MP3PlayerData.playMode==1)
+		lv_label_set_text(playInfoLabel,SYMBOL_PAUSE" "SYMBOL_LOOP);
+	else if(MP3PlayerData.play==1 && MP3PlayerData.playMode==0)
+		lv_label_set_text(playInfoLabel,SYMBOL_PLAY);
+	else if(MP3PlayerData.play==0 && MP3PlayerData.playMode==0)
+		lv_label_set_text(playInfoLabel,SYMBOL_PAUSE);
+
+
+
+}
+
+MP3UI_ MP3UI = {.init=MP3UiCreate,.getMP3file=getMP3file,.getAdjFile=getMP3AdjFile,.setSongInfo=MP3UiSetSongInfo,.update=update};

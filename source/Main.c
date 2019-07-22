@@ -27,13 +27,11 @@ static lv_disp_drv_t disp;
 
 /*******************************************************************************/
 
-#define ARM_MATH_CM4	1
-#include "arm_math.h"
-#define F2Q15(x)  ((q15_t)((float32_t)x * 16384UL))
 int main(void)
 {
 
 	POWEROFF.recover();
+	POWEROFF.init();
 
 	/*Inicialización de la placa*/
     BOARD_InitPins();
@@ -55,12 +53,12 @@ int main(void)
 	/*Inicialización de los inputs*/
 	InputHandlerInit();
 	//Registramos los inputs como un keypad
-	kb_drv.type = LV_INDEV_TYPE_KEYPAD;
-	kb_drv.read = InputHandlerRead;
+	kb_drv.type = LV_INDEV_TYPE_ENCODER;
+	kb_drv.read = encoder_read;
 	kb_indev = lv_indev_drv_register(&kb_drv);
 
 	/*Creamos la interfaz de usuario*/
-	MP3UiCreate(&kb_drv);
+	MP3UI.init(&kb_drv);
 
 	/*Creamos el reproductor*/
 	MP3Player.init();
@@ -96,14 +94,20 @@ int main(void)
 	arm_biquad_casd_df1_inst_q15 f;
 	arm_biquad_cascade_df1_init_q15(&f,1,coeff,varState,1);
 	arm_biquad_cascade_df1_q15(&f,i,out,500);*/
-
+	unsigned long long calls=0;
 	while (1)
 	{
 		GPIO_PinWrite(GPIOA,2,1);
 		MP3Player.update();
 		GPIO_PinWrite(GPIOA,2,0);
+
 		GPIO_PinWrite(GPIOC,16,1);
-		lv_task_handler();
+		if(calls%2==1)
+		{
+			MP3UI.update();
+			lv_task_handler();
+		}
+		calls++;
 		GPIO_PinWrite(GPIOC,16,0);
 	}
 

@@ -8,4 +8,4 @@
 #include "MP3PlayerData.h"
 
 MP3PlayerData_ MP3PlayerData = {.play=0, .volume=15, .offset = 0, .currentScreen = 0,
-								.playMode = 0, .equalizeBands={0,0,0}};
+								.playMode = 0, .equalizeBands={0,0,0},.vumeterMode=0};

@@ -11,12 +11,32 @@
 //#include "fsl_debug_console.h"	//Just for debug
 #include "fsl_gpio.h"
 
+#define SCREEN_GPIO 		GPIOB,9
+#define KEYPAD_POWER_GPIO	GPIOE,24
+#define KEYPAD_GND_GPIO		GPIOE,25		//Esto es solo para la multiperforada
+
+static void init()
+{
+	gpio_pin_config_t config = {
+		 kGPIO_DigitalOutput,
+		 0
+	};
+	config.pinDirection = kGPIO_DigitalOutput;
+	config.outputLogic = 1;
+	GPIO_PinInit(SCREEN_GPIO, &config);
+	GPIO_PinWrite(SCREEN_GPIO,1);
+	GPIO_PinInit(KEYPAD_POWER_GPIO, &config);
+	GPIO_PinWrite(KEYPAD_POWER_GPIO,1);
+	GPIO_PinInit(KEYPAD_GND_GPIO, &config);
+	GPIO_PinWrite(KEYPAD_GND_GPIO,0);
+
+}
+
 static void recover()
 {
 	if(PMC_GetPeriphIOIsolationFlag(PMC))
 	{
 		PMC_ClearPeriphIOIsolationFlag(PMC);
-		GPIO_PinWrite(SCREEN_GPIO,1);
 	}
 }
 
@@ -24,6 +44,7 @@ static void powerOff()
 {
 	//recover();
 	GPIO_PinWrite(SCREEN_GPIO,0);
+	//GPIO_PinWrite(KEYPAD_POWER_GPIO,0);
 	LLWU_ClearExternalWakeupPinFlag(LLWU,9);
 	LLWU_SetExternalWakeupPinMode(LLWU, 9,  kLLWU_ExternalPinFallingEdge);
 	//llwu_external_pin_filter_mode_t filterConfig;
@@ -40,5 +61,5 @@ static void powerOff()
 	//PRINTF("Si estas leyendo esto no me dormi un carajo. =)\n");
 }
 
-POWEROFF_ POWEROFF = { .recover = recover, .powerOff = powerOff};
+POWEROFF_ POWEROFF = { .recover = recover, .powerOff = powerOff, .init=init};
 
