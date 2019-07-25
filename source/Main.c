@@ -52,7 +52,7 @@ int main(void)
 
 	/*Inicialización de los inputs*/
 	InputHandlerInit();
-	//Registramos los inputs como un keypad
+	//Registramos los inputs como un encoder
 	kb_drv.type = LV_INDEV_TYPE_ENCODER;
 	kb_drv.read = encoder_read;
 	kb_indev = lv_indev_drv_register(&kb_drv);

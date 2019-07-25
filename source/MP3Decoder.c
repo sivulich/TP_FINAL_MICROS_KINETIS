@@ -5,7 +5,7 @@
  *      Author: santi
  */
 #include "MP3Decoder.h"
-#include "ff.h"
+#include "ff.h"						//hay que tratar de sacar esto, que use el file sysem (UI)
 //#include "fsl_debug_console.h"
 #include "ID3V1/read_id3.h"
 #include <stdlib.h>

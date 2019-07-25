@@ -15,8 +15,8 @@
  *      DEFINES
  *********************/
 
-#define ILI9341_DC   2
-#define ILI9341_RST  3
+//#define ILI9341_DC   2
+//#define ILI9341_RST  3
 //#define ILI9341_BCKL 23
 
 /**********************

@@ -16,9 +16,9 @@
 //#define SCREEN_GPIO GPIOB,9
 
 #define ENCODER_MAX_VAL 255
-#define ENC_RIGHT 0b010010
-#define ENC_LEFT 0b100001
-static lv_indev_state_t state;
+//#define ENC_RIGHT 0b010010
+//#define ENC_LEFT 0b100001
+//static lv_indev_state_t state;
 void InputHandlerInit()
 {
 	//Initialize non-SPI GPIOs
@@ -55,12 +55,13 @@ void InputHandlerInit()
 	//GPIO_PinInit(A_GPIO, &config);		//A
 	//GPIO_PinInit(B_GPIO, &config);		//B
 }
-static int lastEnc = 0b11, newEnc, storeEnc = 0b11, cnt = 0, lastEncCnt = 0;
+//static int lastEnc = 0b11, newEnc, storeEnc = 0b11, cnt = 0, lastEncCnt = 0;
+static int lastEnc = 0b11, newEnc;
 static unsigned long long pwrDownCnt = 0;
-static lv_indev_state_t encKey=LV_GROUP_KEY_ESC;
+//static lv_indev_state_t encKey=LV_GROUP_KEY_ESC;
 
-static int playPressed=0, offsetPressed = 0,changeModePressed=0;
-bool InputHandlerRead(lv_indev_data_t * data)
+static int playPressed=0, offsetPressed = 0;//,changeModePressed=0;
+/*bool InputHandlerRead(lv_indev_data_t * data)
 {
 	newEnc=FTM_GetQuadDecoderCounterValue(FTM2);
 	if(GPIO_PinRead(BACKWARD_GPIO)==0)
@@ -209,8 +210,8 @@ bool InputHandlerRead(lv_indev_data_t * data)
 		pwrDownCnt=0;
 	}
 	data->state = state;
-    return false;       /*No more data to read so return false*/
-}
+    return false;
+}*/
 
 int tempEnconderDiff=0;
 bool encoder_read(lv_indev_data_t*data){
@@ -238,7 +239,7 @@ bool encoder_read(lv_indev_data_t*data){
 				tempEnconderDiff=1;
 		}
 		data->enc_diff=tempEnconderDiff;
-		lastEncCnt=0;
+		//lastEncCnt=0;
 		lastEnc = newEnc;
 	}
 

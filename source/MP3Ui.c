@@ -1,7 +1,7 @@
 #include "MP3Ui.h"
 #include "UI.h"
 #include "MP3PlayerData.h"
-#include "MP3Player.h"
+#include "MP3Player.h"			//hay que tratar de sacar esto de aca
 #include "MP3Equalizer.h"
 #include "fsl_rtc.h"
 #include <stdio.h>

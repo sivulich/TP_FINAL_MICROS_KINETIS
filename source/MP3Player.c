@@ -9,7 +9,7 @@
 #include "MP3Decoder.h"
 #include "MP3Equalizer.h"
 #include "SigGen.h"
-#include "MP3UI.h"
+#include "MP3UI.h"			//hay que tratar de sacar esto de aca
 #include "LEDDisplay.h"
 #include "MP3PlayerData.h"
 #include <string.h>
@@ -104,6 +104,8 @@ static void fillBuffs(short* decodeOut,unsigned short* buffL,unsigned short* buf
 			//unsigned temp=(((((int)decodeOut[2*j] + 32768))>>4))/2;
 			//temp*=volumeMap[MP3PlayerData.volume];
 			//temp>>=9;
+
+			//Convierte la señal de 16 bits a 12 bits (el DAC es de 12 bit)
 			tempL[j] = (decodeOut[2*j]/2+(1<<14))>>3;//(float)decodeOut[2*j]*1.0/32768/20;
 			//buffL[j] = temp;
 
@@ -169,7 +171,7 @@ static void startSong(char* file)
 	MP3DEC.unloadFile();
 	MP3DEC.loadFile(file);
 
-	//Obtenemos el header extraemos la información y lo salteamos
+	//Obtenemos el header, extraemos la información, y lo salteamos
 	dur = 0;
 	while(dur<=0)
 		dur=MP3DEC.decode(decodeOut,&buffLen);
@@ -255,7 +257,6 @@ static void update()
 					{
 						//Hacer algo de verdad con los errores
 					}
-						//PRINTF("ERROR DECODING %d\n",ret);
 					else if(ret  == 0)
 					{
 						//Termino de reproducirse la cancion actual
@@ -302,14 +303,11 @@ static void update()
 								MP3UI.getAdjFile(1,nextFile);
 							}
 						}
-						//printf("Next file is %s\n",nextFile);
 						break;
 					}
-
 				}
 				lastStatus=status;
 			}
-
 		}
 		else if(MP3PlayerData.play == 0)
 		{

@@ -1,7 +1,7 @@
 #ifndef MP3DECODER_H
 #define MP3DECODER_H
 
-#include "./helix/pub/mp3dec.h"
+#include "./helix/pub/mp3dec.h"	//hay que tratar de sacar esto de aca
 
 #ifdef __cplusplus
 extern "C" {

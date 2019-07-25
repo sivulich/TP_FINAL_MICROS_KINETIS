@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-#define DISP_SPI_MOSI 13
+/*#define DISP_SPI_MOSI 13
 #define DISP_SPI_CLK  14
-#define DISP_SPI_CS   5
+#define DISP_SPI_CS   5*/
 
 extern volatile unsigned spiFlush;
 
