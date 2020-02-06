@@ -36,7 +36,7 @@ int main(void)
 	/*Inicialización de la placa*/
     BOARD_InitPins();
     BOARD_BootClockRUN();
- //   BOARD_InitDebugConsole();
+   // BOARD_InitDebugConsole();
 
 	/*inicialización de littlevgl*/
 	lv_init();

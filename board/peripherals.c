@@ -6,12 +6,11 @@
 /* clang-format off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!GlobalInfo
-product: Peripherals v4.1
+product: Peripherals v5.0
 processor: MK64FN1M0xxx12
-package_id: MK64FN1M0VLL12
+package_id: MK64FN1M0VLQ12
 mcu_data: ksdk2_0
-processor_version: 4.0.1
-board: FRDM-K64F
+processor_version: 5.0.0
 functionalGroups:
 - name: BOARD_InitPeripherals
   called_from_default_init: true

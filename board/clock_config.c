@@ -33,16 +33,16 @@
 /* clang-format off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!GlobalInfo
-product: Clocks v4.1
+product: Clocks v5.0
 processor: MK64FN1M0xxx12
-package_id: MK64FN1M0VLL12
+package_id: MK64FN1M0VLQ12
 mcu_data: ksdk2_0
-processor_version: 4.0.1
-board: FRDM-K64F
+processor_version: 5.0.0
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
 /* clang-format on */
 
 #include "fsl_smc.h"
+#include "fsl_rtc.h"
 #include "clock_config.h"
 
 /*******************************************************************************
@@ -51,9 +51,14 @@ board: FRDM-K64F
 #define MCG_PLL_DISABLE                                   0U  /*!< MCGPLLCLK disabled */
 #define OSC_CAP0P                                         0U  /*!< Oscillator 0pF capacitor load */
 #define OSC_ER_CLK_DISABLE                                0U  /*!< Disable external reference clock */
+#define RTC_OSC_CAP_LOAD_10PF                        0x2800U  /*!< RTC oscillator capacity load: 10pF */
+#define RTC_RTC32KCLK_PERIPHERALS_ENABLED                 1U  /*!< RTC32KCLK to other peripherals: enabled */
 #define SIM_OSC32KSEL_RTC32KCLK_CLK                       2U  /*!< OSC32KSEL select: RTC32KCLK clock (32.768kHz) */
 #define SIM_PLLFLLSEL_IRC48MCLK_CLK                       3U  /*!< PLLFLL select: IRC48MCLK clock */
 #define SIM_PLLFLLSEL_MCGPLLCLK_CLK                       1U  /*!< PLLFLL select: MCGPLLCLK clock */
+#define SIM_RTC_CLKOUT_SEL_RTC32KCLK_CLK                  1U  /*!< RTC clock output select: RTC32KCLK clock (32.768kHz) */
+#define SIM_SDHC_CLK_SEL_OSCERCLK_CLK                     2U  /*!< SDHC clock select: OSCERCLK clock */
+#define SIM_USB_CLK_120000000HZ                   120000000U  /*!< Input SIM frequency for USB: 120000000Hz */
 
 /*******************************************************************************
  * Variables
@@ -64,6 +69,42 @@ extern uint32_t SystemCoreClock;
 /*******************************************************************************
  * Code
  ******************************************************************************/
+/*FUNCTION**********************************************************************
+ *
+ * Function Name : CLOCK_CONFIG_SetRtcClock
+ * Description   : This function is used to configuring RTC clock including 
+ * enabling RTC oscillator.
+ * Param capLoad : RTC oscillator capacity load
+ * Param enableOutPeriph : Enable (1U)/Disable (0U) clock to peripherals
+ *
+ *END**************************************************************************/
+static void CLOCK_CONFIG_SetRtcClock(uint32_t capLoad, uint8_t enableOutPeriph)
+{
+  /* RTC clock gate enable */
+  CLOCK_EnableClock(kCLOCK_Rtc0);
+  if ((RTC->CR & RTC_CR_OSCE_MASK) == 0u) { /* Only if the Rtc oscillator is not already enabled */
+    /* Set the specified capacitor configuration for the RTC oscillator */
+    RTC_SetOscCapLoad(RTC, capLoad);
+    /* Enable the RTC 32KHz oscillator */
+    RTC->CR |= RTC_CR_OSCE_MASK;
+  }
+  /* Output to other peripherals */
+  if (enableOutPeriph) {
+    RTC->CR &= ~RTC_CR_CLKO_MASK;
+  }
+  else {
+    RTC->CR |= RTC_CR_CLKO_MASK;
+  }
+  /* Set the XTAL32/RTC_CLKIN frequency based on board setting. */
+  CLOCK_SetXtal32Freq(BOARD_XTAL32K_CLK_HZ);
+  /* Set RTC_TSR if there is fault value in RTC */
+  if (RTC->SR & RTC_SR_TIF_MASK) {
+    RTC -> TSR = RTC -> TSR;
+  }
+  /* RTC clock gate disable */
+  CLOCK_DisableClock(kCLOCK_Rtc0);
+}
+
 /*FUNCTION**********************************************************************
  *
  * Function Name : CLOCK_CONFIG_SetFllExtRefDiv
@@ -95,22 +136,26 @@ called_from_default_init: true
 outputs:
 - {id: Bus_clock.outFreq, value: 60 MHz}
 - {id: Core_clock.outFreq, value: 120 MHz, locked: true, accuracy: '0.001'}
+- {id: ERCLK32K.outFreq, value: 32.768 kHz}
 - {id: Flash_clock.outFreq, value: 24 MHz}
 - {id: FlexBus_clock.outFreq, value: 40 MHz}
 - {id: LPO_clock.outFreq, value: 1 kHz}
-- {id: MCGFFCLK.outFreq, value: 1.5625 MHz}
+- {id: MCGFFCLK.outFreq, value: 375 kHz}
 - {id: MCGIRCLK.outFreq, value: 32.768 kHz}
-- {id: OSCERCLK.outFreq, value: 50 MHz}
+- {id: OSCERCLK.outFreq, value: 12 MHz}
 - {id: PLLFLLCLK.outFreq, value: 120 MHz}
+- {id: RTC_CLKOUT.outFreq, value: 32.768 kHz}
+- {id: SDHCCLK.outFreq, value: 12 MHz}
 - {id: System_clock.outFreq, value: 120 MHz}
+- {id: USB48MCLK.outFreq, value: 48 MHz}
 settings:
 - {id: MCGMode, value: PEE}
 - {id: MCG.FCRDIV.scale, value: '1', locked: true}
 - {id: MCG.FRDIV.scale, value: '32'}
 - {id: MCG.IREFS.sel, value: MCG.FRDIV}
 - {id: MCG.PLLS.sel, value: MCG.PLL}
-- {id: MCG.PRDIV.scale, value: '20', locked: true}
-- {id: MCG.VDIV.scale, value: '48', locked: true}
+- {id: MCG.PRDIV.scale, value: '3'}
+- {id: MCG.VDIV.scale, value: '30'}
 - {id: MCG_C1_IRCLKEN_CFG, value: Enabled}
 - {id: MCG_C2_RANGE0_CFG, value: Very_high}
 - {id: MCG_C2_RANGE0_FRDIV_CFG, value: Very_high}
@@ -118,6 +163,7 @@ settings:
 - {id: RTCCLKOUTConfig, value: 'yes'}
 - {id: RTC_CR_OSCE_CFG, value: Enabled}
 - {id: RTC_CR_OSC_CAP_LOAD_CFG, value: SC10PF}
+- {id: SDHCClkConfig, value: 'yes'}
 - {id: SIM.OSC32KSEL.sel, value: RTC.RTC32KCLK}
 - {id: SIM.OUTDIV2.scale, value: '2'}
 - {id: SIM.OUTDIV3.scale, value: '3'}
@@ -129,8 +175,12 @@ settings:
 - {id: SIM.USBDIV.scale, value: '5'}
 - {id: SIM.USBFRAC.scale, value: '2'}
 - {id: SIM.USBSRCSEL.sel, value: SIM.USBDIV}
+- {id: USBClkConfig, value: 'yes'}
 sources:
-- {id: OSC.OSC.outFreq, value: 50 MHz, enabled: true}
+- {id: OSC.OSC.outFreq, value: 12 MHz, enabled: true}
+- {id: RTC.RTC32kHz.outFreq, value: 32.768 kHz, enabled: true}
+- {id: SIM.SDHC0_CLK_EXT.outFreq, value: 50 MHz, enabled: true}
+- {id: SIM.USBCLK_EXT.outFreq, value: 48 MHz, enabled: true}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
 /* clang-format on */
 
@@ -150,8 +200,8 @@ const mcg_config_t mcgConfig_BOARD_BootClockRUN =
         .pll0Config =
             {
                 .enableMode = MCG_PLL_DISABLE,    /* MCGPLLCLK disabled */
-                .prdiv = 0x13U,                   /* PLL Reference divider: divided by 20 */
-                .vdiv = 0x18U,                    /* VCO divider: multiplied by 48 */
+                .prdiv = 0x2U,                    /* PLL Reference divider: divided by 3 */
+                .vdiv = 0x6U,                     /* VCO divider: multiplied by 30 */
             },
     };
 const sim_clock_config_t simConfig_BOARD_BootClockRUN =
@@ -162,7 +212,7 @@ const sim_clock_config_t simConfig_BOARD_BootClockRUN =
     };
 const osc_config_t oscConfig_BOARD_BootClockRUN =
     {
-        .freq = 50000000U,                        /* Oscillator frequency: 50000000Hz */
+        .freq = 12000000U,                        /* Oscillator frequency: 12000000Hz */
         .capLoad = (OSC_CAP0P),                   /* Oscillator capacity load: 0pF */
         .workMode = kOSC_ModeExt,                 /* Use external clock */
         .oscerConfig =
@@ -178,6 +228,8 @@ void BOARD_BootClockRUN(void)
 {
     /* Set the system clock dividers in SIM to safe value. */
     CLOCK_SetSimSafeDivs();
+    /* Configure RTC clock including enabling RTC oscillator. */
+    CLOCK_CONFIG_SetRtcClock(RTC_OSC_CAP_LOAD_10PF, RTC_RTC32KCLK_PERIPHERALS_ENABLED);
     /* Initializes OSC0 according to board configuration. */
     CLOCK_InitOsc0(&oscConfig_BOARD_BootClockRUN);
     CLOCK_SetXtal0Freq(oscConfig_BOARD_BootClockRUN.freq);
@@ -195,6 +247,12 @@ void BOARD_BootClockRUN(void)
     CLOCK_SetSimConfig(&simConfig_BOARD_BootClockRUN);
     /* Set SystemCoreClock variable. */
     SystemCoreClock = BOARD_BOOTCLOCKRUN_CORE_CLOCK;
+    /* Set RTC_CLKOUT source. */
+    CLOCK_SetRtcClkOutClock(SIM_RTC_CLKOUT_SEL_RTC32KCLK_CLK);
+    /* Enable USB FS clock. */
+    CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcPll0, SIM_USB_CLK_120000000HZ);
+    /* Set SDHC clock source. */
+    CLOCK_SetSdhc0Clock(SIM_SDHC_CLK_SEL_OSCERCLK_CLK);
 }
 
 /*******************************************************************************

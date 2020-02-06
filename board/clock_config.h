@@ -11,7 +11,8 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define BOARD_XTAL0_CLK_HZ                         50000000U  /*!< Board xtal0 frequency in Hz */
+#define BOARD_XTAL0_CLK_HZ                         12000000U  /*!< Board xtal0 frequency in Hz */
+#define BOARD_XTAL32K_CLK_HZ                          32768U  /*!< Board RTC xtal frequency in Hz */
 
 /*******************************************************************************
  ************************ BOARD_InitBootClocks function ************************
