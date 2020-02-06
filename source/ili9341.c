@@ -17,8 +17,8 @@
 /*********************
  *      DEFINES
  *********************/
-#define ILI9341_DC   2
-#define ILI9341_RST  3
+#define ILI9341_DC   GPIOC,2		//esto cambio a GPIOD,5
+#define ILI9341_RST  GPIOC,3		//esto cambio a GPIOD,4
 //#define ILI9341_BCKL 23
 /**********************
  *      TYPEDEFS
@@ -87,21 +87,21 @@ void ili9431_init(void)
 	 	 0
 	};
 
-	GPIO_PinInit(GPIOC,ILI9341_RST, &config);
+	GPIO_PinInit(ILI9341_RST, &config);
 	//GPIO_WritePinOutput(GPIOC,ILI9341_RST,1);
-	GPIO_PinInit(GPIOC,ILI9341_DC, &config);
+	GPIO_PinInit(ILI9341_DC, &config);
 	//gpio_set_direction(ILI9341_DC, GPIO_MODE_OUTPUT);
 	//gpio_set_direction(ILI9341_RST, GPIO_MODE_OUTPUT);
 	//gpio_set_direction(ILI9341_BCKL, GPIO_MODE_OUTPUT);
 
 	//Reset the display
-	GPIO_PinWrite(GPIOC,ILI9341_RST, 0);
+	GPIO_PinWrite(ILI9341_RST, 0);
 	//gpio_set_level(ILI9341_RST, 0);
 
 	SDMMCEVENT_Delay(100);
 	//vTaskDelay(100 / portTICK_RATE_MS);
 
-	GPIO_PinWrite(GPIOC,ILI9341_RST, 1);
+	GPIO_PinWrite(ILI9341_RST, 1);
 	//gpio_set_level(ILI9341_RST, 1);
 
 	SDMMCEVENT_Delay(100);
@@ -278,7 +278,7 @@ void ili9431_flush(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_colo
 
 static void ili9441_send_cmd(uint8_t cmd, int blocking)
 {
-	GPIO_PinWrite(GPIOC,ILI9341_DC, 0);
+	GPIO_PinWrite(ILI9341_DC, 0);
 	//gpio_set_level(ILI9341_DC, 0);	 /*Command mode*/
 
 	//disp_spi_send(&cmd, 1);
@@ -290,7 +290,7 @@ static void ili9441_send_cmd(uint8_t cmd, int blocking)
 
 static void ili9341_send_data(void * data, unsigned length, int blocking)
 {
-	GPIO_PinWrite(GPIOC,ILI9341_DC, 1);
+	GPIO_PinWrite(ILI9341_DC, 1);
 	//gpio_set_level(ILI9341_DC, 1);	 /*Data mode*/
 
 	//disp_spi_send(data, length);

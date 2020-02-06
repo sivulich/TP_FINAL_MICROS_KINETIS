@@ -7,15 +7,31 @@
 #include "MP3Ui.h"
 #include "MP3PlayerData.h"
 
-#define FORWARD_GPIO GPIOC,7
-#define BACKWARD_GPIO GPIOC,0
-#define PLAY_GPIO GPIOC,5
-#define ENTER_GPIO GPIOC,8
+//Keypad GPIOs
+#define FORWARD_GPIO	GPIOC,7		//cambio a GPIOB,4
+#define BACKWARD_GPIO	GPIOC,0		//cambio a GPIOB,6
+#define PLAY_GPIO		GPIOC,5		//cambio a GPIOB,5
+#define ENTER_GPIO		GPIOC,8		//cambio a GPIOB,20
+#define ONOFF_GPIO		GPIOA,4		//nuevo, para el segundo encoder
+
+//Para el modulo Bluetooth
+#define VOLP_BT			GPIOD,14
+#define VOLN_BT			GPIOD,13
+#define NEXT_BT			GPIOD,12
+#define PREV_BT			GPIOD,11
+#define PLAY_BT			GPIOD,10
+#define AUX_DET			GPIOD,15
+
 //#define A_GPIO GPIOC,1
 //#define B_GPIO GPIOC,9
 //#define SCREEN_GPIO GPIOB,9
 
+//FTM modulos
+#define ENC_FTM			FTM2
+#define VOL_FTM			FTM1
 #define ENCODER_MAX_VAL 255
+
+
 //#define ENC_RIGHT 0b010010
 //#define ENC_LEFT 0b100001
 //static lv_indev_state_t state;
@@ -29,7 +45,8 @@ void InputHandlerInit()
 
 	ftm_config_t configFTM;
 	FTM_GetDefaultConfig(&configFTM);
-	FTM_Init(FTM2, &configFTM);
+	FTM_Init(ENC_FTM, &configFTM);
+	//FTM_Init(VOL_FTM, &configFTM);
 
 	ftm_phase_params_t paramsPhase;
 	paramsPhase.enablePhaseFilter = 1;
@@ -40,10 +57,13 @@ void InputHandlerInit()
 
 	uint32_t startVal = 0;
 	uint32_t overVal = ENCODER_MAX_VAL;
-	FTM_SetQuadDecoderModuloValue(FTM2, startVal, overVal);
-	FTM_ClearQuadDecoderCounterValue(FTM2);
+	FTM_SetQuadDecoderModuloValue(ENC_FTM, startVal, overVal);
+	FTM_ClearQuadDecoderCounterValue(ENC_FTM);
+	//FTM_SetQuadDecoderModuloValue(VOL_FTM, startVal, overVal);
+	//FTM_ClearQuadDecoderCounterValue(VOL_FTM);
 
-	FTM_SetupQuadDecode(FTM2,&paramsPhase,&paramsPhase,quadMode);
+	FTM_SetupQuadDecode(ENC_FTM,&paramsPhase,&paramsPhase,quadMode);
+	//FTM_SetupQuadDecode(VOL_FTM,&paramsPhase,&paramsPhase,quadMode);
 
 	GPIO_PinInit(GPIOA,4, &config);
 	GPIO_PinInit(GPIOC,6, &config);
@@ -221,7 +241,7 @@ bool encoder_read(lv_indev_data_t*data){
 		tempEnconderDiff=0;
 		return false;
 	}
-	newEnc=FTM_GetQuadDecoderCounterValue(FTM2);
+	newEnc=FTM_GetQuadDecoderCounterValue(ENC_FTM);
 	if(newEnc!=lastEnc && abs(newEnc-lastEnc)>=2)
 	{
 		if(lastEnc > (ENCODER_MAX_VAL+1)/2)

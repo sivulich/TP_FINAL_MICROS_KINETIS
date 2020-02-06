@@ -8,12 +8,18 @@
 #include "fsl_pmc.h"
 #include "fsl_smc.h"
 #include "fsl_llwu.h"
-//#include "fsl_debug_console.h"	//Just for debug
 #include "fsl_gpio.h"
 
 #define SCREEN_GPIO 		GPIOB,9
-#define KEYPAD_POWER_GPIO	GPIOE,24
 #define KEYPAD_GND_GPIO		GPIOE,25		//Esto es solo para la multiperforada
+#define PWR_BUTTON			LLWU,9			//esto cambio a LLWU,3
+
+//GPIOs para apagar VCC en modulos externos al MCU
+#define KEYPAD_POWER_GPIO	GPIOE,24		//esto cambio a GPIOA,6
+#define ILI_CTRL			GPIOC,19
+#define LED_CTRL			GPIOC,18
+#define OUT_CTRL			GPIOA,10
+#define BT_CTRL				GPIOD,7
 
 static void init()
 {
@@ -45,8 +51,8 @@ static void powerOff()
 	//recover();
 	GPIO_PinWrite(SCREEN_GPIO,0);
 	//GPIO_PinWrite(KEYPAD_POWER_GPIO,0);
-	LLWU_ClearExternalWakeupPinFlag(LLWU,9);
-	LLWU_SetExternalWakeupPinMode(LLWU, 9,  kLLWU_ExternalPinFallingEdge);
+	LLWU_ClearExternalWakeupPinFlag(PWR_BUTTON);
+	LLWU_SetExternalWakeupPinMode(PWR_BUTTON,kLLWU_ExternalPinFallingEdge);
 	//llwu_external_pin_filter_mode_t filterConfig;
 	//filterConfig.pinIndex=9;
 	//filterConfig.filterMode=kLLWU_PinFilterFallingEdge;
