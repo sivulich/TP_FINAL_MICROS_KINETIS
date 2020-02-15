@@ -77,7 +77,7 @@ void InputHandlerInit()
 }
 //static int lastEnc = 0b11, newEnc, storeEnc = 0b11, cnt = 0, lastEncCnt = 0;
 static int lastEnc = 0b11, newEnc;
-static int lastVolEnc = 0b11, newVolEnc;
+static int lastVolEnc = 0b11, newVolEnc, volEncDiff;
 static unsigned long long pwrDownCnt = 0;
 //static lv_indev_state_t encKey=LV_GROUP_KEY_ESC;
 
@@ -269,19 +269,19 @@ bool encoder_read(lv_indev_data_t*data){
 		if(lastVolEnc > (ENCODER_MAX_VAL+1)/2)
 		{
 			if( (newVolEnc > (lastVolEnc-(ENCODER_MAX_VAL+1)/2)) && newVolEnc<lastVolEnc)
-				tempEnconderDiff=1;
+				volEncDiff=1;
 			else
-				tempEnconderDiff=-1;
+				volEncDiff=-1;
 		}
 		else
 		{
 			if( (newVolEnc < (lastVolEnc+(ENCODER_MAX_VAL+1)/2)) && newEnc>lastEnc)
-				tempEnconderDiff=-1;
+				volEncDiff=-1;
 			else
-				tempEnconderDiff=1;
+				volEncDiff=1;
 		}
-		if(MP3PlayerData.volume+tempEnconderDiff<=MAX_VOLUME && MP3PlayerData.volume+tempEnconderDiff>=MIN_VOLUME)
-			MP3PlayerData.volume+=tempEnconderDiff;
+		if(MP3PlayerData.volume+volEncDiff<=MAX_VOLUME && MP3PlayerData.volume+volEncDiff>=MIN_VOLUME)
+			MP3PlayerData.volume+=volEncDiff;
 		// data->volEnc_diff=tempEnconderDiff;
 		//lastEncCnt=0;
 		lastVolEnc = newVolEnc;
