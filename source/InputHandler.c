@@ -59,11 +59,11 @@ void InputHandlerInit()
 	uint32_t overVal = ENCODER_MAX_VAL;
 	FTM_SetQuadDecoderModuloValue(ENC_FTM, startVal, overVal);
 	FTM_ClearQuadDecoderCounterValue(ENC_FTM);
-	//FTM_SetQuadDecoderModuloValue(VOL_FTM, startVal, overVal);
-	//FTM_ClearQuadDecoderCounterValue(VOL_FTM);
+	FTM_SetQuadDecoderModuloValue(VOL_FTM, startVal, overVal);
+	FTM_ClearQuadDecoderCounterValue(VOL_FTM);
 
 	FTM_SetupQuadDecode(ENC_FTM,&paramsPhase,&paramsPhase,quadMode);
-	//FTM_SetupQuadDecode(VOL_FTM,&paramsPhase,&paramsPhase,quadMode);
+	FTM_SetupQuadDecode(VOL_FTM,&paramsPhase,&paramsPhase,quadMode);
 
 //	GPIO_PinInit(GPIOA,4, &config);
 //	GPIO_PinInit(GPIOC,6, &config);
@@ -77,6 +77,7 @@ void InputHandlerInit()
 }
 //static int lastEnc = 0b11, newEnc, storeEnc = 0b11, cnt = 0, lastEncCnt = 0;
 static int lastEnc = 0b11, newEnc;
+static int lastVolEnc = 0b11, newVolEnc;
 static unsigned long long pwrDownCnt = 0;
 //static lv_indev_state_t encKey=LV_GROUP_KEY_ESC;
 
@@ -262,6 +263,30 @@ bool encoder_read(lv_indev_data_t*data){
 		//lastEncCnt=0;
 		lastEnc = newEnc;
 	}
+	newVolEnc=FTM_GetQuadDecoderCounterValue(VOL_FTM);
+	if(newVolEnc!=lastVolEnc && abs(newVolEnc-lastVolEnc)>=2)
+	{
+		if(lastVolEnc > (ENCODER_MAX_VAL+1)/2)
+		{
+			if( (newVolEnc > (lastVolEnc-(ENCODER_MAX_VAL+1)/2)) && newVolEnc<lastVolEnc)
+				tempEnconderDiff=1;
+			else
+				tempEnconderDiff=-1;
+		}
+		else
+		{
+			if( (newVolEnc < (lastVolEnc+(ENCODER_MAX_VAL+1)/2)) && newEnc>lastEnc)
+				tempEnconderDiff=-1;
+			else
+				tempEnconderDiff=1;
+		}
+		if(MP3PlayerData.volume+tempEnconderDiff<=MAX_VOLUME && MP3PlayerData.volume+tempEnconderDiff>=MIN_VOLUME)
+			MP3PlayerData.volume+=tempEnconderDiff;
+		// data->volEnc_diff=tempEnconderDiff;
+		//lastEncCnt=0;
+		lastVolEnc = newVolEnc;
+	}
+
 
 	if(GPIO_PinRead(ENTER_GPIO)==0){
 		data->state = LV_INDEV_STATE_PR;
