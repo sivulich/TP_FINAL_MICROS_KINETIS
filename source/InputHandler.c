@@ -275,7 +275,7 @@ bool encoder_read(lv_indev_data_t*data){
 		}
 		else
 		{
-			if( (newVolEnc < (lastVolEnc+(ENCODER_MAX_VAL+1)/2)) && newEnc>lastEnc)
+			if( (newVolEnc < (lastVolEnc+(ENCODER_MAX_VAL+1)/2)) && newVolEnc>lastVolEnc)
 				volEncDiff=-1;
 			else
 				volEncDiff=1;
