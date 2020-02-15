@@ -146,7 +146,7 @@ static void fillBuffs(short* decodeOut,unsigned short* buffL,unsigned short* buf
 			temp>>=13;
 			buffR[j] = temp;
 			//POR AHORA
-			buffL[j] = buffL[j]/2 + buffR[j]/2;
+//			buffL[j] = buffL[j]/2 + buffR[j]/2;
 		}
 	}
 	else

@@ -46,6 +46,7 @@ void InputHandlerInit()
 	ftm_config_t configFTM;
 	FTM_GetDefaultConfig(&configFTM);
 	FTM_Init(ENC_FTM, &configFTM);
+	FTM_Init(VOL_FTM, &configFTM);
 	//FTM_Init(VOL_FTM, &configFTM);
 
 	ftm_phase_params_t paramsPhase;
