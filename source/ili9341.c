@@ -17,8 +17,8 @@
 /*********************
  *      DEFINES
  *********************/
-#define ILI9341_DC   GPIOC,2		//esto cambio a GPIOD,5
-#define ILI9341_RST  GPIOC,3		//esto cambio a GPIOD,4
+#define ILI9341_DC   GPIOD,5		//esto cambio a GPIOD,5
+#define ILI9341_RST  GPIOD,4		//esto cambio a GPIOD,4
 //#define ILI9341_BCKL 23
 /**********************
  *      TYPEDEFS

@@ -33,11 +33,11 @@
 /* clang-format off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!GlobalInfo
-product: Clocks v5.0
+product: Clocks v7.0
 processor: MK64FN1M0xxx12
 package_id: MK64FN1M0VLQ12
 mcu_data: ksdk2_0
-processor_version: 5.0.0
+processor_version: 7.0.1
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
 /* clang-format on */
 
@@ -57,7 +57,7 @@ processor_version: 5.0.0
 #define SIM_PLLFLLSEL_IRC48MCLK_CLK                       3U  /*!< PLLFLL select: IRC48MCLK clock */
 #define SIM_PLLFLLSEL_MCGPLLCLK_CLK                       1U  /*!< PLLFLL select: MCGPLLCLK clock */
 #define SIM_RTC_CLKOUT_SEL_RTC32KCLK_CLK                  1U  /*!< RTC clock output select: RTC32KCLK clock (32.768kHz) */
-#define SIM_SDHC_CLK_SEL_OSCERCLK_CLK                     2U  /*!< SDHC clock select: OSCERCLK clock */
+#define SIM_SDHC_CLK_SEL_OSCERCLK_CLK                     0U  /*!< SDHC clock select: OSCERCLK clock */
 #define SIM_USB_CLK_120000000HZ                   120000000U  /*!< Input SIM frequency for USB: 120000000Hz */
 
 /*******************************************************************************
@@ -157,9 +157,11 @@ settings:
 - {id: MCG.PRDIV.scale, value: '3'}
 - {id: MCG.VDIV.scale, value: '30'}
 - {id: MCG_C1_IRCLKEN_CFG, value: Enabled}
+- {id: MCG_C2_OSC_MODE_CFG, value: ModeOscLowPower}
 - {id: MCG_C2_RANGE0_CFG, value: Very_high}
 - {id: MCG_C2_RANGE0_FRDIV_CFG, value: Very_high}
 - {id: OSC_CR_ERCLKEN_CFG, value: Enabled}
+- {id: OSC_CR_SYS_OSC_CAP_LOAD_CFG, value: SC8PF}
 - {id: RTCCLKOUTConfig, value: 'yes'}
 - {id: RTC_CR_OSCE_CFG, value: Enabled}
 - {id: RTC_CR_OSC_CAP_LOAD_CFG, value: SC10PF}
@@ -213,8 +215,8 @@ const sim_clock_config_t simConfig_BOARD_BootClockRUN =
 const osc_config_t oscConfig_BOARD_BootClockRUN =
     {
         .freq = 12000000U,                        /* Oscillator frequency: 12000000Hz */
-        .capLoad = (OSC_CAP0P),                   /* Oscillator capacity load: 0pF */
-        .workMode = kOSC_ModeExt,                 /* Use external clock */
+        .capLoad = (kOSC_Cap8P),                  /* Oscillator capacity load: 8pF */
+        .workMode = kOSC_ModeOscLowPower,         /* Oscillator low power */
         .oscerConfig =
             {
                 .enableMode = kOSC_ErClkEnable,   /* Enable external reference clock, disable external reference clock in STOP mode */

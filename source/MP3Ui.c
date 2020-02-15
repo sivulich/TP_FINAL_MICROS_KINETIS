@@ -154,13 +154,13 @@ static lv_res_t fileScreenUpdate(lv_obj_t* obj)
 		}
 	}
 
-	if(UIinit==2)
+	if(UIinit>1)
 		UIinit=UI.init();
 	char* currFile = UI.getFile();
-	if(currFile==(char*)-1)
-	{
-		UIinit=2;
-	}
+//	if(currFile==(char*)-1)
+//	{
+//		UIinit=2;
+//	}
 
 	if (currFile != 0 && currFile!=(char*)-1)
 	{

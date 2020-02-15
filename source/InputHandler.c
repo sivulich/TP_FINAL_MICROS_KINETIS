@@ -8,19 +8,19 @@
 #include "MP3PlayerData.h"
 
 //Keypad GPIOs
-#define FORWARD_GPIO	GPIOC,7		//cambio a GPIOB,4
-#define BACKWARD_GPIO	GPIOC,0		//cambio a GPIOB,6
-#define PLAY_GPIO		GPIOC,5		//cambio a GPIOB,5
-#define ENTER_GPIO		GPIOC,8		//cambio a GPIOB,20
-#define ONOFF_GPIO		GPIOA,4		//nuevo, para el segundo encoder
+#define FORWARD_GPIO	GPIOB,6		//cambio a GPIOB,4
+#define BACKWARD_GPIO	GPIOB,4		//cambio a GPIOB,6
+#define PLAY_GPIO		GPIOB,5		//cambio a GPIOB,5
+#define ENTER_GPIO		GPIOB,20		//cambio a GPIOB,20
+#define ONOFF_GPIO		GPIOA,13		//nuevo, para el segundo encoder
 
-//Para el modulo Bluetooth
-#define VOLP_BT			GPIOD,14
-#define VOLN_BT			GPIOD,13
-#define NEXT_BT			GPIOD,12
-#define PREV_BT			GPIOD,11
-#define PLAY_BT			GPIOD,10
-#define AUX_DET			GPIOD,15
+//Para el modulo Bluetooth(no existe mas)
+//#define VOLP_BT			GPIOD,14
+//#define VOLN_BT			GPIOD,13
+//#define NEXT_BT			GPIOD,12
+//#define PREV_BT			GPIOD,11
+//#define PLAY_BT			GPIOD,10
+//#define AUX_DET			GPIOD,15
 
 //#define A_GPIO GPIOC,1
 //#define B_GPIO GPIOC,9
@@ -65,8 +65,8 @@ void InputHandlerInit()
 	FTM_SetupQuadDecode(ENC_FTM,&paramsPhase,&paramsPhase,quadMode);
 	//FTM_SetupQuadDecode(VOL_FTM,&paramsPhase,&paramsPhase,quadMode);
 
-	GPIO_PinInit(GPIOA,4, &config);
-	GPIO_PinInit(GPIOC,6, &config);
+//	GPIO_PinInit(GPIOA,4, &config);
+//	GPIO_PinInit(GPIOC,6, &config);
 
 	//GPIO_PinInit(FORWARD_GPIO, &config);		//fordward
 	GPIO_PinInit(BACKWARD_GPIO, &config);		//backward

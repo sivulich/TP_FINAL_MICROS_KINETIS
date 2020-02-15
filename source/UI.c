@@ -144,6 +144,15 @@ static void updateCurrent()
 			file[1]=0;
 			len=1;
 		}
+		else if(ini==3)
+		{
+			cnt=1;
+			strncpy(current[0], "Error during SD card read, press to return",MAX_FILE_NAME);
+			current[0][MAX_FILE_NAME]=4;
+			file[0]='.';
+			file[1]=0;
+			len=1;
+		}
 	}
 
 
@@ -156,15 +165,15 @@ static unsigned init() {
 	if (sdcardWaitCardInsert() != kStatus_Success)
 	{
 		ini=2;
-		updateCurrent();
+//		updateCurrent();
 	}
 	else
 	{
 		if (f_mount(&g_fileSystem, driverNumberBuffer, 0U))
 		{
 			//PRINTF("Mount volume failed.\r\n");
-			ini=0;
-			return 0;
+			ini=3;
+//			return 0;
 		}
 
 		#if (FF_FS_RPATH >= 2U)
@@ -172,20 +181,20 @@ static unsigned init() {
 			if (error)
 			{
 				//PRINTF("Change drive failed.\r\n");
-				ini=0;
-				return 0;
+				ini=3;
+//				return 0;
 			}
 		#endif
 
 		if (f_opendir(&dr,".") != FR_OK)  // opendir returns NULL if couldn't open directory
-			ini = 0;
+			ini = 3;
 		else
 		{
 			ini=1;
-			updateCurrent();
+
 		}
 	}
-
+	updateCurrent();
 	return ini;
 
 };
@@ -275,7 +284,7 @@ static char input(char cmd) {
 			return 0;
 		}
 	}
-	else if(ini==2)
+	else if(ini>1)
 		return 1;
 
 	return cmd;
@@ -296,7 +305,7 @@ static char* getFile() {
 		}
 		return 0;
 	}
-	else if(ini == 2)
+	else if(ini > 1)
 	{
 		return (char*)-1;
 	}

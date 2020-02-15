@@ -30,10 +30,10 @@ static arm_cfft_radix4_instance_f32 cfft_inst;
 static void init()
 {
 	LEDMatrix.init();
-	LEDMatrix.init();
+//	LEDMatrix.init();
 	for(int i=0;i<8;i++)
 		for(int j=0;j<8;j++)
-			LEDMatrix.setPoint(i,j,0,0,0);
+			LEDMatrix.setPoint(i,j,10,10,0);
 	LEDMatrix.update();
 	arm_rfft_init_f32(&rfft_inst, &cfft_inst, 1024, 0, 1);
 }
@@ -45,6 +45,7 @@ static void barVumeter()
 		{
 			if(eqPoints[(currEqualizer+1)%4][i]>15*(j+1))
 				LEDMatrix.setPoint(i,7-j,eqColors[j][0],eqColors[j][1],eqColors[j][2]);
+//				LEDMatrix.setPoint(i,7-j,10,0,0);
 			else
 				LEDMatrix.setPoint(i,7-j,0,0,0);
 		}

@@ -1,5 +1,5 @@
-#include <stdio.h>
-#include <string.h>
+//#include <stdio.h>
+//#include <string.h>
 #include "fsl_sd.h"
 //#include "fsl_debug_console.h"
 #include "board.h"
@@ -30,11 +30,12 @@ static lv_disp_drv_t disp;
 int main(void)
 {
 
+	/*Inicialización de la placa*/
+	BOARD_InitPins();
+
 	POWEROFF.recover();
 	POWEROFF.init();
 
-	/*Inicialización de la placa*/
-    BOARD_InitPins();
     BOARD_BootClockRUN();
    // BOARD_InitDebugConsole();
 
@@ -67,9 +68,13 @@ int main(void)
 		 kGPIO_DigitalOutput,
 		 0
 	};
-	GPIO_PinInit(GPIOA,2, &config);
-	GPIO_PinInit(GPIOC,16, &config);
-
+//	gpio_pin_config_t configIn = {
+//			 kGPIO_DigitalInput
+//		};
+//	GPIO_PinInit(GPIOA,2, &config);
+	GPIO_PinInit(GPIOC,12, &config);
+//	GPIO_PinInit(GPIOE,6, &configIn);
+	GPIO_PinWrite(GPIOC,12,1);
 
 	/*float in[500];
 	q15_t i[500];
@@ -97,18 +102,18 @@ int main(void)
 	unsigned long long calls=0;
 	while (1)
 	{
-		GPIO_PinWrite(GPIOA,2,1);
+//		GPIO_PinWrite(GPIOA,2,1);
 		MP3Player.update();
-		GPIO_PinWrite(GPIOA,2,0);
+//		GPIO_PinWrite(GPIOA,2,0);
 
-		GPIO_PinWrite(GPIOC,16,1);
+//		GPIO_PinWrite(GPIOC,16,1);
 		if(calls%2==1)
 		{
 			MP3UI.update();
 			lv_task_handler();
 		}
 		calls++;
-		GPIO_PinWrite(GPIOC,16,0);
+//		GPIO_PinWrite(GPIOC,16,0);
 	}
 
 	//printf("Thanks for using MP3\n");

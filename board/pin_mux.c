@@ -7,11 +7,11 @@
 /*
  * TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!GlobalInfo
-product: Pins v5.0
+product: Pins v7.0
 processor: MK64FN1M0xxx12
 package_id: MK64FN1M0VLQ12
 mcu_data: ksdk2_0
-processor_version: 5.0.0
+processor_version: 7.0.1
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -49,8 +49,6 @@ BOARD_InitPins:
     pull_select: up, pull_enable: enable, passive_filter: disable}
   - {pin_num: '8', peripheral: SDHC, signal: 'DATA, 2', pin_signal: PTE5/SPI1_PCS2/UART3_RX/SDHC0_D2/FTM3_CH0, slew_rate: fast, open_drain: disable, drive_strength: high,
     pull_select: up, pull_enable: enable, passive_filter: disable}
-  - {pin_num: '9', peripheral: GPIOE, signal: 'GPIO, 6', pin_signal: PTE6/SPI1_PCS3/UART3_CTS_b/I2S0_MCLK/FTM3_CH1/USB_SOF_OUT, slew_rate: fast, open_drain: disable,
-    drive_strength: low, pull_select: down, pull_enable: enable, passive_filter: disable}
   - {pin_num: '105', peripheral: GPIOC, signal: 'GPIO, 2', pin_signal: ADC0_SE4b/CMP1_IN0/PTC2/SPI0_PCS2/UART1_CTS_b/FTM0_CH1/FB_AD12/I2S0_TX_FS}
   - {pin_num: '106', peripheral: GPIOC, signal: 'GPIO, 3', pin_signal: CMP1_IN1/PTC3/LLWU_P7/SPI0_PCS1/UART1_RX/FTM0_CH2/CLKOUT/I2S0_TX_BCLK}
   - {pin_num: '128', peripheral: SPI0, signal: SCK, pin_signal: ADC0_SE5b/PTD1/SPI0_SCK/UART2_CTS_b/FTM3_CH1/FB_CS0_b}
@@ -61,7 +59,6 @@ BOARD_InitPins:
   - {pin_num: '104', peripheral: GPIOC, signal: 'GPIO, 1', pin_signal: ADC0_SE15/PTC1/LLWU_P6/SPI0_PCS3/UART1_RTS_b/FTM0_CH0/FB_AD13/I2S0_TXD0}
   - {pin_num: '97', peripheral: FTM2, signal: 'QD_PH, A', pin_signal: PTB18/CAN0_TX/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA, pull_select: up, pull_enable: enable}
   - {pin_num: '98', peripheral: FTM2, signal: 'QD_PH, B', pin_signal: PTB19/CAN0_RX/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB, pull_select: up, pull_enable: enable}
-  - {pin_num: '90', peripheral: GPIOB, signal: 'GPIO, 9', pin_signal: PTB9/SPI1_PCS1/UART3_CTS_b/FB_AD20}
   - {pin_num: '45', peripheral: GPIOE, signal: 'GPIO, 24', pin_signal: ADC0_SE17/PTE24/UART4_TX/I2C0_SCL/EWM_OUT_b}
   - {pin_num: '46', peripheral: GPIOE, signal: 'GPIO, 25', pin_signal: ADC0_SE18/PTE25/UART4_RX/I2C0_SDA/EWM_IN}
   - {pin_num: '19', peripheral: USB0, signal: DP, pin_signal: USB0_DP}
@@ -81,7 +78,6 @@ BOARD_InitPins:
   - {pin_num: '119', peripheral: GPIOC, signal: 'GPIO, 14', pin_signal: PTC14/UART4_RX/FB_AD25}
   - {pin_num: '120', peripheral: GPIOC, signal: 'GPIO, 15', pin_signal: PTC15/UART4_TX/FB_AD24}
   - {pin_num: '62', peripheral: GPIOA, signal: 'GPIO, 10', pin_signal: PTA10/FTM2_CH0/MII0_RXD2/FTM2_QD_PHA/TRACE_D0}
-  - {pin_num: '101', peripheral: SPI2, signal: SOUT, pin_signal: PTB22/SPI2_SOUT/FB_AD29/CMP2_OUT, open_drain: enable}
   - {pin_num: '126', peripheral: GPIOC, signal: 'GPIO, 19', pin_signal: PTC19/UART3_CTS_b/ENET0_1588_TMR3/FB_CS3_b/FB_BE7_0_BLS31_24_b/FB_TA_b, open_drain: enable}
   - {pin_num: '131', peripheral: GPIOD, signal: 'GPIO, 4', pin_signal: PTD4/LLWU_P14/SPI0_PCS1/UART0_RTS_b/FTM0_CH4/FB_AD2/EWM_IN/SPI1_PCS0}
   - {pin_num: '132', peripheral: GPIOD, signal: 'GPIO, 5', pin_signal: ADC0_SE6b/PTD5/SPI0_PCS2/UART0_CTS_b/UART0_COL_b/FTM0_CH5/FB_AD1/EWM_OUT_b/SPI1_SCK}
@@ -97,6 +93,8 @@ BOARD_InitPins:
   - {pin_num: '110', peripheral: I2S0, signal: RXD0, pin_signal: PTC5/LLWU_P9/SPI0_SCK/LPTMR0_ALT2/I2S0_RXD0/FB_AD10/CMP0_OUT/FTM0_CH2}
   - {pin_num: '112', peripheral: I2S0, signal: RX_FS, pin_signal: CMP0_IN1/PTC7/SPI0_SIN/USB_SOF_OUT/I2S0_RX_FS/FB_AD8}
   - {pin_num: '116', peripheral: I2S0, signal: RXD1, pin_signal: ADC1_SE7b/PTC11/LLWU_P11/I2C1_SDA/FTM3_CH7/I2S0_RXD1/FB_RW_b}
+  - {pin_num: '9', peripheral: GPIOE, signal: 'GPIO, 6', pin_signal: PTE6/SPI1_PCS3/UART3_CTS_b/I2S0_MCLK/FTM3_CH1/USB_SOF_OUT, pull_select: up, pull_enable: enable}
+  - {pin_num: '101', peripheral: GPIOB, signal: 'GPIO, 22', pin_signal: PTB22/SPI2_SOUT/FB_AD29/CMP2_OUT, open_drain: enable}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -204,8 +202,8 @@ void BOARD_InitPins(void)
                        * corresponding PE field is set. */
                       | (uint32_t)(kPORT_PullUp));
 
-    /* PORTB22 (pin 101) is configured as SPI2_SOUT */
-    PORT_SetPinMux(PORTB, 22U, kPORT_MuxAlt2);
+    /* PORTB22 (pin 101) is configured as PTB22 */
+    PORT_SetPinMux(PORTB, 22U, kPORT_MuxAsGpio);
 
     PORTB->PCR[22] = ((PORTB->PCR[22] &
                        /* Mask bits to zero which are setting */
@@ -247,9 +245,6 @@ void BOARD_InitPins(void)
                      /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the
                       * corresponding PE field is set. */
                      | (uint32_t)(kPORT_PullUp));
-
-    /* PORTB9 (pin 90) is configured as PTB9 */
-    PORT_SetPinMux(PORTB, 9U, kPORT_MuxAsGpio);
 
     /* PORTC0 (pin 103) is configured as PTC0 */
     PORT_SetPinMux(PORTC, 0U, kPORT_MuxAsGpio);
@@ -438,22 +433,16 @@ void BOARD_InitPins(void)
     /* PORTE5 (pin 8) is configured as SDHC0_D2 */
     PORT_SetPinConfig(PORTE, 5U, &porte5_pin8_config);
 
-    const port_pin_config_t porte6_pin9_config = {/* Internal pull-down resistor is enabled */
-                                                  kPORT_PullDown,
-                                                  /* Fast slew rate is configured */
-                                                  kPORT_FastSlewRate,
-                                                  /* Passive filter is disabled */
-                                                  kPORT_PassiveFilterDisable,
-                                                  /* Open drain is disabled */
-                                                  kPORT_OpenDrainDisable,
-                                                  /* Low drive strength is configured */
-                                                  kPORT_LowDriveStrength,
-                                                  /* Pin is configured as PTE6 */
-                                                  kPORT_MuxAsGpio,
-                                                  /* Pin Control Register fields [15:0] are not locked */
-                                                  kPORT_UnlockRegister};
     /* PORTE6 (pin 9) is configured as PTE6 */
-    PORT_SetPinConfig(PORTE, 6U, &porte6_pin9_config);
+    PORT_SetPinMux(PORTE, 6U, kPORT_MuxAsGpio);
+
+    PORTE->PCR[6] = ((PORTE->PCR[6] &
+                      /* Mask bits to zero which are setting */
+                      (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_ISF_MASK)))
+
+                     /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the
+                      * corresponding PE field is set. */
+                     | (uint32_t)(kPORT_PullUp));
 }
 /***********************************************************************************************************************
  * EOF
