@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #define STATUS_BAR_HEIGHT 20
+#define BACK_BUTTON_SIZE LV_HOR_RES / 15
 
 static lv_res_t fileScreenUpdate(lv_obj_t* obj);
 /*Screens*/
@@ -33,7 +34,7 @@ static unsigned duration,currentTime;
 static lv_obj_t* progressBar,*playBackBtn,*songNameLbl,*artistNameLbl,*prevLbl,*nextLbl,*playPauseLbl;
 
 /*SettingsScreen Info*/
-static lv_obj_t* setBackButton, *loopModeBtn;
+static lv_obj_t* setBackButton, *loopModeBtn, *vumeter_roller, *date_rollers[5];
 
 /*Button styles*/
 static lv_style_t style_bg,style_bgg;
@@ -125,8 +126,8 @@ static lv_res_t btn_action(lv_obj_t * btn)
 	{
 		hideAllScreens();
 		lv_obj_set_hidden(settingsScreen,0);
-		lv_obj_t * obs[2]={loopModeBtn, setBackButton};
-		setActiveGroup(SETTING_SCREEN,2,obs);
+		lv_obj_t * obs[8]={loopModeBtn, vumeter_roller, date_rollers[0], date_rollers[1], date_rollers[2], date_rollers[3], date_rollers[4], setBackButton};
+		setActiveGroup(SETTING_SCREEN,8,obs);
 	}
 	return LV_RES_OK; /*Return OK because the button matrix is not deleted*/
 }
@@ -359,11 +360,11 @@ static  lv_obj_t* BackButtonCreate(lv_obj_t* p, lv_res_t (*fn)(lv_obj_t* obj))
 	lv_obj_t* backBtn = lv_btn_create(p, NULL);
 	lv_obj_set_pos(backBtn, 0, 0);
 	lv_cont_set_fit(backBtn, false, false);
-	lv_obj_set_width(backBtn, LV_HOR_RES / 15);
-	lv_obj_set_height(backBtn, LV_HOR_RES / 15);
+	lv_obj_set_width(backBtn, BACK_BUTTON_SIZE);
+	lv_obj_set_height(backBtn, BACK_BUTTON_SIZE);
 	lv_btn_set_action(backBtn, LV_BTN_ACTION_CLICK, fn);
 	lv_obj_t* lab = lv_label_create(backBtn, NULL);
-	lv_obj_set_height(lab, LV_HOR_RES / 15 - 3);
+	lv_obj_set_height(lab, BACK_BUTTON_SIZE - 3);
 	lv_label_set_text(lab, SYMBOL_LEFT);
 	lv_btn_set_style(backBtn, LV_BTN_STATE_REL, &style_btn_rel);
 	lv_btn_set_style(backBtn, LV_BTN_STATE_PR, &style_btn_pr);
@@ -413,27 +414,155 @@ lv_res_t LoopModeCB(lv_obj_t * btn)
 	return LV_RES_OK;
 }
 
+static lv_res_t VumeterModeCB(lv_obj_t* r)
+{
+	char dbs[100];
+	lv_roller_get_selected_str(r,dbs);
+	MP3PlayerData.vumeterMode = atoi(dbs)-1;
+	return LV_RES_OK;
+}
+
+static lv_res_t DateSelectorCB(lv_obj_t* r)
+{
+	char dbs[100];
+	char year_buf[100];
+	char month_buf[100];
+	rtc_datetime_t date;
+//	RTC_GetDatetime(RTC, &date);
+	lv_roller_get_selected_str(date_rollers[0],year_buf);
+	lv_roller_get_selected_str(date_rollers[1],month_buf);
+	lv_roller_get_selected_str(date_rollers[2],dbs);
+	int year = atoi(year_buf);
+	int month = atoi(month_buf);
+
+	date.year = year;
+	date.month = month;
+	date.day = atoi(dbs);
+	lv_roller_get_selected_str(date_rollers[3],dbs);
+	date.hour = atoi(dbs);
+	lv_roller_get_selected_str(date_rollers[4],dbs);
+	date.minute = atoi(dbs);
+	date.second = 0;
+
+	int maxDay = 30;
+	if(month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12)
+		maxDay = 31;
+	else if(month == 2){
+		if( (year%4 == 0 && year%100 != 0) || year%400 == 0)
+			maxDay = 29;
+		else
+			maxDay = 28;
+	}
+	char str[3000]="";
+	for(int i = 1; i <= maxDay; i++){
+		char strTemp[20];
+		if(i != maxDay)
+			sprintf(strTemp,"%d\n",i);
+		else
+			sprintf(strTemp,"%d",i);
+		strcat(str,strTemp);
+	}
+	lv_roller_set_options(date_rollers[2], str);
+
+	/* RTC time counter has to be stopped before setting the date & time in the TSR register */
+	RTC_StopTimer(RTC);
+	RTC_SetDatetime(RTC, &date);
+	RTC_StartTimer(RTC);
+	return LV_RES_OK;
+}
+
+static lv_obj_t* createDateSelector(const char* name, lv_coord_t x, lv_coord_t y, lv_coord_t w, lv_coord_t h, int minValue, int maxValue, int value, lv_obj_t* prevRoller, int first){
+	lv_obj_t *baseRoller = lv_roller_create(settingsScreen, NULL);
+	lv_obj_t *baseLabel = lv_label_create(settingsScreen, NULL);
+
+	lv_label_set_long_mode(baseLabel, LV_LABEL_LONG_ROLL);
+	lv_label_set_align(baseLabel, LV_LABEL_ALIGN_CENTER);
+	lv_obj_set_width(baseLabel, w);
+	lv_label_set_static_text(baseLabel, name);
+
+	char str[3000]="";
+	for(int i = minValue; i <= maxValue; i++){
+		char strTemp[20];
+		if(i != maxValue)
+			sprintf(strTemp,"%d\n",i);
+		else
+			sprintf(strTemp,"%d",i);
+		strcat(str,strTemp);
+	}
+	lv_roller_set_options(baseRoller, str);
+	lv_roller_set_hor_fit(baseRoller, false);
+//	lv_obj_set_pos(vumeter_roller, x, y);
+
+	if(first)
+		lv_obj_align(baseRoller, loopModeBtn, LV_ALIGN_OUT_BOTTOM_LEFT,0,15);
+	else
+		lv_obj_align(baseRoller, prevRoller, LV_ALIGN_OUT_RIGHT_MID,0,0);
+
+	lv_obj_set_width(baseRoller, w);
+	//lv_obj_set_height(bassRoller, h);
+	lv_roller_set_visible_row_count(baseRoller, 3);
+	lv_roller_set_selected(baseRoller, value-minValue, false);
+	lv_obj_align(baseLabel, baseRoller, LV_ALIGN_OUT_TOP_MID, 0,0);
+	lv_roller_set_style(baseRoller, LV_ROLLER_STYLE_BG, &style_btn_rel);
+	lv_roller_set_style(baseRoller, LV_ROLLER_STYLE_SEL, &style_btn_pr);
+
+	lv_roller_set_action(baseRoller, DateSelectorCB);
+	return baseRoller;
+}
+
 static void SettingsScreenCreate(void)
 {
+	// Parent object for settings screen
 	settingsScreen = lv_cont_create(baseScreen, NULL);
 	lv_obj_set_size(settingsScreen,LV_HOR_RES,LV_VER_RES-STATUS_BAR_HEIGHT);
 	lv_obj_align(settingsScreen,NULL,LV_ALIGN_IN_BOTTOM_MID,0,0);
 	int width = lv_obj_get_width(playScreen);
 	int height= lv_obj_get_height(playScreen);
-
 	lv_obj_set_style(settingsScreen, &style_bg);
 
+	//Loop mode button object
 	lv_obj_t* label;
 	loopModeBtn=lv_btn_create(settingsScreen,NULL);
 	lv_cont_set_fit(loopModeBtn, false, false);
-	lv_obj_set_size(loopModeBtn,width/2, height/2);
+	lv_obj_set_size(loopModeBtn, width/2, height/3);
 
 	lv_btn_set_state(loopModeBtn, LV_BTN_STATE_TGL_REL);  /*Set toggled state*/
-	lv_obj_align(loopModeBtn,settingsScreen,LV_ALIGN_CENTER,0,0);
+	lv_obj_align(loopModeBtn,settingsScreen,LV_ALIGN_IN_TOP_LEFT,0,(BACK_BUTTON_SIZE));
 
 	lv_btn_set_action(loopModeBtn,LV_BTN_ACTION_CLICK, LoopModeCB);
 	label = lv_label_create(loopModeBtn, NULL);
-	lv_label_set_text(label, "Loop Mode Enable");
+	lv_label_set_text(label, "Loop Mode");
+
+	//Vumeter mode select roller
+	vumeter_roller = lv_roller_create(settingsScreen, NULL);
+	lv_obj_t *vumeterLabel = lv_label_create(settingsScreen, NULL);
+	lv_label_set_long_mode(vumeterLabel, LV_LABEL_LONG_ROLL);
+	lv_label_set_align(vumeterLabel, LV_LABEL_ALIGN_CENTER);
+	lv_obj_set_width(vumeterLabel, width/2);
+	lv_label_set_static_text(vumeterLabel, "Vumeter Style");
+	char str[200]="1\n2\n3\n4\n5\n6";
+	lv_roller_set_options(vumeter_roller, str);
+	lv_roller_set_hor_fit(vumeter_roller, false);
+//	lv_obj_set_pos(vumeter_roller, x, y);
+	lv_obj_align(vumeter_roller, loopModeBtn, LV_ALIGN_OUT_RIGHT_MID,0,0);
+	lv_obj_set_width(vumeter_roller, width/2);
+	//lv_obj_set_height(bassRoller, h);
+	lv_roller_set_visible_row_count(vumeter_roller, 3);
+	lv_roller_set_selected(vumeter_roller, 0, false);
+	lv_obj_align(vumeterLabel, vumeter_roller, LV_ALIGN_OUT_TOP_MID, 0,0);
+	lv_roller_set_style(vumeter_roller, LV_ROLLER_STYLE_BG, &style_btn_rel);
+	lv_roller_set_style(vumeter_roller, LV_ROLLER_STYLE_SEL, &style_btn_pr);
+
+	lv_roller_set_action(vumeter_roller, VumeterModeCB);
+
+	//Date selector rollers
+	rtc_datetime_t date;
+	RTC_GetDatetime(RTC,&date);
+	date_rollers[0] = createDateSelector("Year",0, 0, width/5, 10,	 1970, 2020,date.year,  date_rollers[0], 1);
+	date_rollers[1] = createDateSelector("Month", 0, 0, width/5, 10, 1,    12, 	date.month, date_rollers[0], 0);
+	date_rollers[2] = createDateSelector("Day", 0, 0, width/5, 10,	 1,    30, 	date.day,   date_rollers[1], 0);
+	date_rollers[3] = createDateSelector("Hour", 0, 0, width/5, 10,	 0,    23, 	date.hour,  date_rollers[2], 0);
+	date_rollers[4] = createDateSelector("Minute", 0, 0, width/5, 10,0,    59, 	date.minute,date_rollers[3], 0);
 
 	setBackButton = BackButtonCreate(settingsScreen, retMainScreen);
 }
@@ -519,11 +648,11 @@ static void PlayScreenCreate(void)
 
 	prevLbl = lv_label_create(playScreen,NULL);
 	lv_label_set_text(prevLbl,SYMBOL_PREV);
-	lv_obj_align(prevLbl,NULL,LV_ALIGN_IN_BOTTOM_LEFT,width/3,-5);
+	lv_obj_align(prevLbl,NULL,LV_ALIGN_IN_BOTTOM_LEFT,width/4,-5);
 
 	nextLbl = lv_label_create(playScreen,NULL);
 	lv_label_set_text(nextLbl,SYMBOL_NEXT);
-	lv_obj_align(nextLbl,NULL,LV_ALIGN_IN_BOTTOM_RIGHT,-width/3,-5);
+	lv_obj_align(nextLbl,NULL,LV_ALIGN_IN_BOTTOM_RIGHT,-width/4,-5);
 
 	playPauseLbl = lv_label_create(playScreen,NULL);
 	lv_label_set_text(playPauseLbl,SYMBOL_PLAY);
@@ -611,6 +740,11 @@ static void statusBarCreate(void)
 
 static void MP3UiCreate(lv_indev_drv_t* kb_dr)
 {
+	rtc_config_t rtcConf;
+	RTC_GetDefaultConfig(&rtcConf);
+	RTC_Init(RTC,&rtcConf);
+	RTC_SetClockSource(RTC);
+
 	kb_drv = kb_dr;
 	kb_indev = lv_indev_drv_register(kb_drv);
 	UIinit=UI.init();
@@ -626,24 +760,8 @@ static void MP3UiCreate(lv_indev_drv_t* kb_dr)
 	hideAllScreens();
 	lv_obj_set_hidden(mainScreen,0);
 	setActiveGroup(MAIN_SCREEN,4,mainBtns);
-	rtc_config_t rtcConf;
-	RTC_GetDefaultConfig(&rtcConf);
-	RTC_Init(RTC,&rtcConf);
-	RTC_SetClockSource(RTC);
-	/*rtc_datetime_t date;
-	date.year = 2019U;
-	date.month = 3U;
-	date.day = 14U;
-	date.hour = 19U;
-	date.minute = 48;
-	date.second = 30;*/
 
-	/* RTC time counter has to be stopped before setting the date & time in the TSR register */
-	RTC_StopTimer(RTC);
-
-	/* Set RTC time to default */
-	//RTC_SetDatetime(RTC, &date);
-	RTC_StartTimer(RTC);
+//	RTC_StartTimer(RTC);
 	MP3UI.update();
 }
 
