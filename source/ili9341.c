@@ -14,6 +14,9 @@
 #include "../lvgl/lvgl.h"
 #include "fsl_gpio.h"
 
+//DEBUG
+#include "MP3PlayerData.h"
+
 /*********************
  *      DEFINES
  *********************/
@@ -278,24 +281,28 @@ void ili9431_flush(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_colo
 
 static void ili9441_send_cmd(uint8_t cmd, int blocking)
 {
-	GPIO_PinWrite(ILI9341_DC, 0);
-	//gpio_set_level(ILI9341_DC, 0);	 /*Command mode*/
+//	if(MP3PlayerData.volume != 0){
+		GPIO_PinWrite(ILI9341_DC, 0);
+		//gpio_set_level(ILI9341_DC, 0);	 /*Command mode*/
 
-	//disp_spi_send(&cmd, 1);
-	if(blocking==1)
-		SPI_Write_Blocking(&cmd, 1,0);
-	else
-		SPI_Write_DMA(&cmd,1,0);
+		//disp_spi_send(&cmd, 1);
+		if(blocking==1)
+			SPI_Write_Blocking(&cmd, 1,0);
+		else
+			SPI_Write_DMA(&cmd,1,0);
+//	}
 }
 
 static void ili9341_send_data(void * data, unsigned length, int blocking)
 {
-	GPIO_PinWrite(ILI9341_DC, 1);
-	//gpio_set_level(ILI9341_DC, 1);	 /*Data mode*/
+//	if(MP3PlayerData.volume != 0){
+		GPIO_PinWrite(ILI9341_DC, 1);
+		//gpio_set_level(ILI9341_DC, 1);	 /*Data mode*/
 
-	//disp_spi_send(data, length);
-	if(blocking==1)
-		SPI_Write_Blocking(data, length,0);
-	else
-		SPI_Write_DMA(data,length,0);
+		//disp_spi_send(data, length);
+		if(blocking==1)
+			SPI_Write_Blocking(data, length,0);
+		else
+			SPI_Write_DMA(data,length,0);
+//	}
 }

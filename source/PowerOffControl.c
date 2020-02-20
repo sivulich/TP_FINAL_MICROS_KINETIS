@@ -159,12 +159,13 @@ static void powerOff()
 	//recover();
 	SIM_SetUsbVoltRegulatorEnableMode(kSIM_UsbVoltRegEnableInAllModes);
 	GPIO_PinWrite(SCREEN_GPIO,0);
-	GPIO_PinWrite(ILI_CTRL,0);
-	GPIO_PinWrite(LED_CTRL,0);
-	GPIO_PinWrite(OUT_CTRL,0);
+	GPIO_PinWrite(ILI_CTRL,1);
+	GPIO_PinWrite(LED_CTRL,1);
+	GPIO_PinWrite(OUT_CTRL,1);
 
 	BOARD_DeInitPins();
 	DAC_Deinit(DAC0);
+	DAC_Deinit(DAC1);
 	LLWU_ClearExternalWakeupPinFlag(PWR_BUTTON);
 	LLWU_SetExternalWakeupPinMode(PWR_BUTTON,kLLWU_ExternalPinFallingEdge);
 	//llwu_external_pin_filter_mode_t filterConfig;

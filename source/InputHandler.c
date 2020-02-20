@@ -308,6 +308,7 @@ bool encoder_read(lv_indev_data_t*data){
 			POWEROFF.powerOff();
 	}
 	else{
+		pwrDownCnt=0;
 		if(playPressed == 1)
 		{
 			MP3PlayerData.play^=1;

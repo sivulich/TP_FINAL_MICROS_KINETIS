@@ -10,6 +10,17 @@
 #define STATUS_BAR_HEIGHT 20
 #define BACK_BUTTON_SIZE LV_HOR_RES / 15
 
+#define YEAR_BUFF 26
+//char year_buff[26];
+//char month_buff[28];
+//char day_buff[82];
+//char hour_buff[61];
+//char min_buff[169];
+#define MONTH_BUFF 28
+#define DAY_BUFF 82
+#define HOUR_BUFF 61
+#define MIN_BUFF 169
+
 static lv_res_t fileScreenUpdate(lv_obj_t* obj);
 /*Screens*/
 static lv_obj_t *baseScreen,* mainScreen, *equalizerScreen,*filesScreen,*playScreen, *settingsScreen;
@@ -59,12 +70,6 @@ static void hideAllScreens()
 
 static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 {
-	if (groups[p] != NULL)
-		lv_group_del(groups[p]);
-	groups[p] = lv_group_create();
-	for(int i=0;i<qnt;i++)
-		lv_group_add_obj(groups[p], ob[i]);
-	lv_indev_set_group(kb_indev, groups[p]);
 	for (int i = 0; i < SCREENS; i++)
 		if (groups[i] != 0)
 		{
@@ -74,6 +79,21 @@ static void setActiveGroup(int p,int qnt,lv_obj_t** ob)
 				groups[i] = 0;
 			}
 		}
+	if (groups[p] != NULL)
+		lv_group_del(groups[p]);
+	groups[p] = lv_group_create();
+	for(int i=0;i<qnt;i++)
+		lv_group_add_obj(groups[p], ob[i]);
+	lv_indev_set_group(kb_indev, groups[p]);
+//	for (int i = 0; i < SCREENS; i++)
+//		if (groups[i] != 0)
+//		{
+//			if (i != p)
+//			{
+//				lv_group_del(groups[i]);
+//				groups[i] = 0;
+//			}
+//		}
 			
 	MP3PlayerData.currentScreen=p;
 }
@@ -416,7 +436,7 @@ lv_res_t LoopModeCB(lv_obj_t * btn)
 
 static lv_res_t VumeterModeCB(lv_obj_t* r)
 {
-	char dbs[100];
+	char dbs[10];
 	lv_roller_get_selected_str(r,dbs);
 	MP3PlayerData.vumeterMode = atoi(dbs)-1;
 	return LV_RES_OK;
@@ -424,9 +444,9 @@ static lv_res_t VumeterModeCB(lv_obj_t* r)
 
 static lv_res_t DateSelectorCB(lv_obj_t* r)
 {
-	char dbs[100];
-	char year_buf[100];
-	char month_buf[100];
+	char dbs[10];
+	char year_buf[10];
+	char month_buf[10];
 	rtc_datetime_t date;
 //	RTC_GetDatetime(RTC, &date);
 	lv_roller_get_selected_str(date_rollers[0],year_buf);
@@ -453,9 +473,9 @@ static lv_res_t DateSelectorCB(lv_obj_t* r)
 		else
 			maxDay = 28;
 	}
-	char str[3000]="";
+	char str[180]="";
 	for(int i = 1; i <= maxDay; i++){
-		char strTemp[20];
+		char strTemp[5];
 		if(i != maxDay)
 			sprintf(strTemp,"%d\n",i);
 		else
@@ -480,9 +500,9 @@ static lv_obj_t* createDateSelector(const char* name, lv_coord_t x, lv_coord_t y
 	lv_obj_set_width(baseLabel, w);
 	lv_label_set_static_text(baseLabel, name);
 
-	char str[3000]="";
+	char str[170] = "";
 	for(int i = minValue; i <= maxValue; i++){
-		char strTemp[20];
+		char strTemp[5];
 		if(i != maxValue)
 			sprintf(strTemp,"%d\n",i);
 		else
@@ -494,7 +514,7 @@ static lv_obj_t* createDateSelector(const char* name, lv_coord_t x, lv_coord_t y
 //	lv_obj_set_pos(vumeter_roller, x, y);
 
 	if(first)
-		lv_obj_align(baseRoller, loopModeBtn, LV_ALIGN_OUT_BOTTOM_LEFT,0,15);
+		lv_obj_align(baseRoller, loopModeBtn, LV_ALIGN_OUT_BOTTOM_LEFT,0,2*BACK_BUTTON_SIZE);
 	else
 		lv_obj_align(baseRoller, prevRoller, LV_ALIGN_OUT_RIGHT_MID,0,0);
 
@@ -540,7 +560,7 @@ static void SettingsScreenCreate(void)
 	lv_label_set_align(vumeterLabel, LV_LABEL_ALIGN_CENTER);
 	lv_obj_set_width(vumeterLabel, width/2);
 	lv_label_set_static_text(vumeterLabel, "Vumeter Style");
-	char str[200]="1\n2\n3\n4\n5\n6";
+	char str[12]="1\n2\n3\n4\n5\n6";
 	lv_roller_set_options(vumeter_roller, str);
 	lv_roller_set_hor_fit(vumeter_roller, false);
 //	lv_obj_set_pos(vumeter_roller, x, y);
@@ -558,7 +578,7 @@ static void SettingsScreenCreate(void)
 	//Date selector rollers
 	rtc_datetime_t date;
 	RTC_GetDatetime(RTC,&date);
-	date_rollers[0] = createDateSelector("Year",0, 0, width/5, 10,	 1970, 2020,date.year,  date_rollers[0], 1);
+	date_rollers[0] = createDateSelector("Year",0, 0, width/5, 10,	 2020, 2025,date.year,  date_rollers[0], 1);
 	date_rollers[1] = createDateSelector("Month", 0, 0, width/5, 10, 1,    12, 	date.month, date_rollers[0], 0);
 	date_rollers[2] = createDateSelector("Day", 0, 0, width/5, 10,	 1,    30, 	date.day,   date_rollers[1], 0);
 	date_rollers[3] = createDateSelector("Hour", 0, 0, width/5, 10,	 0,    23, 	date.hour,  date_rollers[2], 0);
@@ -761,7 +781,7 @@ static void MP3UiCreate(lv_indev_drv_t* kb_dr)
 	lv_obj_set_hidden(mainScreen,0);
 	setActiveGroup(MAIN_SCREEN,4,mainBtns);
 
-//	RTC_StartTimer(RTC);
+	RTC_StartTimer(RTC);
 	MP3UI.update();
 }
 

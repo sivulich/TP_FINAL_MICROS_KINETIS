@@ -93,9 +93,14 @@ static int init()
 		MP3PlayerData.equalizeBands[i]=0;
 	return 0;
 }
+
+int actualVolume=0, lastSign=1;
+
 static void fillBuffs(short* decodeOut,unsigned short* buffL,unsigned short* buffR,int buffLen)
 {
 	q15_t tempL[1152],tempR[1152];
+	unsigned temp;
+	int different= actualVolume!=MP3PlayerData.volume;
 	if(buffLen > 1152)
 	{
 		for(int j=0;j<buffLen/2;j++)
@@ -105,8 +110,21 @@ static void fillBuffs(short* decodeOut,unsigned short* buffL,unsigned short* buf
 			//temp*=volumeMap[MP3PlayerData.volume];
 			//temp>>=9;
 
+
 			//Convierte la señal de 16 bits a 12 bits (el DAC es de 12 bit)
-			tempL[j] = (decodeOut[2*j]/2+(1<<14))>>3;//(float)decodeOut[2*j]*1.0/32768/20;
+			temp = ((((unsigned long)decodeOut[2*j])));
+			if(different && lastSign==1 && temp<(1<<15)){
+				lastSign=-1;
+				actualVolume=MP3PlayerData.volume;
+			}else if (different && lastSign==-1 && temp>(1<<15)){
+				lastSign=1;
+				actualVolume=MP3PlayerData.volume;
+			}
+//			temp >>= 6;
+			temp*=volumeMap[actualVolume];
+			temp >>= 12;
+			tempL[j] = (temp/2+(1<<14))>>3;//(float)decodeOut[2*j]*1.0/32768/20;
+
 			//buffL[j] = temp;
 
 			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
@@ -114,7 +132,11 @@ static void fillBuffs(short* decodeOut,unsigned short* buffL,unsigned short* buf
 			//temp=(((((int)decodeOut[2*j+1] + 32768))>>4))/2;
 			//temp*=volumeMap[MP3PlayerData.volume];
 			//temp>>=9;
-			tempR[j]=(decodeOut[2*j+1]/2+(1<<14))>>3;//(float)decodeOut[2*j+1]*1.0/32768/20;
+			temp = (((((unsigned long)decodeOut[2*j+1]))));
+//			temp >>= 6;
+			temp*=volumeMap[actualVolume];
+			temp >>= 12;
+			tempR[j]=(temp/2+(1<<14))>>3;//(float)decodeOut[2*j+1]*1.0/32768/20;
 			//buffR[j] = temp;
 			//POR AHORA
 			//tempL[j] = tempL[j]/2 + tempR[j]/2;
@@ -131,20 +153,20 @@ static void fillBuffs(short* decodeOut,unsigned short* buffL,unsigned short* buf
 				buffL[j]=0;
 			else if(buffL[j]>=1<<12)
 				buffL[j]=(1<<12)-1;
-			temp=((((unsigned)buffL[j])));
-			temp*=volumeMap[MP3PlayerData.volume];
-			temp>>=13;
-			buffL[j] = temp;
+//			temp=((((unsigned)buffL[j])));
+//			temp*=volumeMap[MP3PlayerData.volume];
+//			temp>>=13;
+//			buffL[j] = temp;
 
 			//MP3Equalizer.equalize(decodeOut+2*j+1,outBuffR[i]+j,1,1);
 			if(buffR[j]&(1<<15))
 				buffR[j]=0;
 			else if(buffR[j]>=1<<12)
 				buffR[j]=(1<<12)-1;
-			temp=(((((unsigned)buffR[j]))));
-			temp*=volumeMap[MP3PlayerData.volume];
-			temp>>=13;
-			buffR[j] = temp;
+//			temp=(((((unsigned)buffR[j]))));
+//			temp*=volumeMap[MP3PlayerData.volume];
+//			temp>>=13;
+//			buffR[j] = temp;
 			//POR AHORA
 //			buffL[j] = buffL[j]/2 + buffR[j]/2;
 		}

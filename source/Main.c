@@ -15,6 +15,10 @@
 #include "LEDMatrix.h"
 #include "PowerOffControl.h"
 
+//DEBUG
+#include "MP3PlayerData.h"
+#include "fsl_dac.h"
+
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -22,8 +26,6 @@
 static lv_indev_drv_t kb_drv;
 static lv_indev_t * kb_indev;
 static lv_disp_drv_t disp;
-
-
 
 /*******************************************************************************/
 
@@ -64,17 +66,25 @@ int main(void)
 	/*Creamos el reproductor*/
 	MP3Player.init();
 
-	gpio_pin_config_t config = {
-		 kGPIO_DigitalOutput,
-		 0
-	};
-//	gpio_pin_config_t configIn = {
-//			 kGPIO_DigitalInput
-//		};
+//	dac_config_t dacConfigStruct;
+//	DAC_GetDefaultConfig(&dacConfigStruct);
+//	//dacConfigStruct.referenceVoltageSource=kDAC_ReferenceVoltageSourceVref1;
+//	DAC_Init(DAC0, &dacConfigStruct);
+//	DAC_SetBufferReadPointer(DAC0, 0U);
+//	DAC_SetBufferValue(DAC0, 0U, 0U);
+//
+//	DAC_Init(DAC1, &dacConfigStruct);
+//	DAC_SetBufferReadPointer(DAC1, 0U);
+//	DAC_SetBufferValue(DAC1, 0U, 2045U);
+
+//	gpio_pin_config_t config = {
+//		 kGPIO_DigitalOutput,
+//		 0
+//	};
 //	GPIO_PinInit(GPIOA,2, &config);
-	GPIO_PinInit(GPIOC,12, &config);
+//	GPIO_PinInit(GPIOC,12, &config);
 //	GPIO_PinInit(GPIOE,6, &configIn);
-	GPIO_PinWrite(GPIOC,12,1);
+//	GPIO_PinWrite(GPIOC,12,1);
 
 	/*float in[500];
 	q15_t i[500];
@@ -107,15 +117,25 @@ int main(void)
 //		GPIO_PinWrite(GPIOA,2,0);
 
 //		GPIO_PinWrite(GPIOC,16,1);
-		if(calls%2==1)
-		{
-			MP3UI.update();
-			lv_task_handler();
-		}
-		calls++;
+//		if(MP3PlayerData.volume != 0){
+			if(calls%2==1)
+			{
+				MP3UI.update();
+				lv_task_handler();
+			}
+			calls++;
+//		}
+//
+//		if(MP3PlayerData.volume == 0){
+//
+//			GPIO_PinWrite(GPIOD,6,0);
+//			GPIO_PinWrite(GPIOC,19,0);
+//			GPIO_PinWrite(GPIOD,5,0);
+//		}
+//
+
 //		GPIO_PinWrite(GPIOC,16,0);
 	}
-
 	//printf("Thanks for using MP3\n");
 	//GETCHAR();
 }
